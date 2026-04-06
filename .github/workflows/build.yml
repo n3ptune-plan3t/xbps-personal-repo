@@ -4,57 +4,109 @@ on:
   workflow_dispatch:
     inputs:
       packages:
-        description: "Space-separated package names to build"
+        description: "Comma-separated package names"
         required: true
+        default: "scroll"
         type: string
-      void_packages_ref:
-        description: "void-packages ref"
-        required: true
-        type: string
-        default: master
 
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
-  build:
-    runs-on: self-hosted
+  build-packages:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/void-linux/void-glibc-full:20250227R1
+      options: --privileged
 
     steps:
-      - name: Check out overlay repo
-        uses: actions/checkout@v5
-
-      - name: Clone upstream void-packages
+      - name: Setup environment
+        shell: sh
         run: |
-          rm -rf void-packages
-          git clone --depth 1 --branch "${{ inputs.void_packages_ref }}" \
-            https://github.com/void-linux/void-packages.git void-packages
+          export PATH="/usr/libexec/chroot-git:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin:/tmp/bin"
+          mkdir -p /etc/xbps.d
+          cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/
+          sed -i 's|repo-default|repo-ci|g' /etc/xbps.d/*-repository-*.conf
+
+          xbps-install -Syu xbps
+          xbps-install -Syu
+          xbps-install -y bash sudo git rsync curl unzip openssh github-cli nodejs
+
+          useradd -G xbuilder -M builder
+
+      - name: Checkout void-packages
+        uses: actions/checkout@v5
+        with:
+          repository: void-linux/void-packages
+          path: void-packages
+
+      - name: Checkout custom packages repo
+        uses: actions/checkout@v5
+        with:
+          path: custom-packages
 
       - name: Overlay custom packages
+        shell: bash
         run: |
-          rsync -a srcpkgs/ void-packages/srcpkgs/
-          if [ -d common ]; then
-            rsync -a common/ void-packages/common/
+          cp -r custom-packages/srcpkgs/* void-packages/srcpkgs/
+          if [ -d custom-packages/common ]; then
+            cp -r custom-packages/common/* void-packages/common/
           fi
 
-      - name: Configure xbps-src
-        working-directory: void-packages
+      - name: Restore distfiles cache
+        uses: actions/cache@v4
+        with:
+          path: /github/home/hostdir/sources
+          key: void-sources-x86_64-${{ hashFiles('custom-packages/srcpkgs/**/template', 'custom-packages/srcpkgs/**/files/**', 'custom-packages/common/shlibs') }}
+          restore-keys: |
+            void-sources-x86_64-
+            void-sources-
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: /github/home/hostdir/ccache
+          key: void-ccache-x86_64
+          restore-keys: |
+            void-ccache-x86_64
+            void-ccache-
+
+      - name: Prepare build environment
+        shell: bash
         run: |
-          cat >> etc/conf <<'EOF'
-          XBPS_ALLOW_RESTRICTED=yes
-          XBPS_CCACHE=yes
-          EOF
+          cd void-packages
+          chown -R builder:builder .
+          mkdir -p /github/home/hostdir /github/home/packages
+          chown -R builder:builder /github/home/hostdir /github/home/packages
+
+          sudo -Eu builder bash common/travis/set_mirror.sh
+          sudo -Eu builder bash common/travis/prepare.sh
+          bash common/travis/fetch-xtools.sh
 
       - name: Build packages
-        working-directory: void-packages
+        shell: bash
         run: |
-          ./xbps-src binary-bootstrap
-          for pkg in ${{ inputs.packages }}; do
-            ./xbps-src pkg "$pkg"
+          cd void-packages
+
+          for pkg in $(echo '${{ github.event.inputs.packages }}' | tr ',' ' '); do
+            pkg_trim=$(echo "$pkg" | xargs)
+            echo "Building: $pkg_trim"
+            echo y | sudo -Eu builder ./xbps-src -j"$(nproc)" -s -H /github/home/hostdir pkg "$pkg_trim"
+            cp /github/home/hostdir/binpkgs/"$pkg_trim"*.xbps /github/home/packages/
           done
 
-      - name: Upload binpkgs artifact
+      - name: Show built packages
+        shell: bash
+        run: |
+          find /github/home/packages -type f | sort
+
+      - name: Upload built packages
         uses: actions/upload-artifact@v4
         with:
-          name: void-binpkgs-x86_64-${{ github.run_number }}
-          path: void-packages/hostdir/binpkgs
+          name: built-packages
+          path: /github/home/packages/
+          retention-days: 7
+          if-no-files-found: error
