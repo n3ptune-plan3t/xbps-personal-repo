@@ -22,15 +22,15 @@ on:
         type: string
         default: master
 
-run-name: >-
-  build ${{ inputs.packages }} for ${{ inputs.arch }}
-
 permissions:
   contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/void-packages/hostdir/ccache
 
     steps:
       - name: Check out overlay repo
@@ -39,7 +39,7 @@ jobs:
       - name: Install host tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl git xz-utils zstd libarchive-tools
+          sudo apt-get install -y curl git rsync xz-utils zstd libarchive-tools
 
       - name: Install xbps static
         run: |
@@ -60,12 +60,34 @@ jobs:
             rsync -a common/ void-packages/common/
           fi
 
-      - name: Configure xbps-src
+      - name: Configure xbps-src for CI
         working-directory: void-packages
         run: |
           cat >> etc/conf <<'EOF'
           XBPS_ALLOW_RESTRICTED=yes
+          XBPS_CHROOT_CMD=ethereal
+          XBPS_CCACHE=yes
           EOF
+
+      - name: Restore distfiles cache
+        uses: actions/cache@v4
+        with:
+          path: void-packages/hostdir/sources
+          key: void-sources-${{ inputs.arch }}-${{ inputs.void_packages_ref }}-${{ hashFiles('srcpkgs/**/template', 'srcpkgs/**/files/**', 'common/shlibs') }}
+          restore-keys: |
+            void-sources-${{ inputs.arch }}-${{ inputs.void_packages_ref }}-
+            void-sources-${{ inputs.arch }}-
+            void-sources-
+
+      - name: Restore ccache
+        uses: actions/cache@v4
+        with:
+          path: void-packages/hostdir/ccache
+          key: void-ccache-${{ inputs.arch }}-${{ inputs.void_packages_ref }}-${{ hashFiles('srcpkgs/**/template', 'srcpkgs/**/files/**', 'common/shlibs') }}
+          restore-keys: |
+            void-ccache-${{ inputs.arch }}-${{ inputs.void_packages_ref }}-
+            void-ccache-${{ inputs.arch }}-
+            void-ccache-
 
       - name: Build packages
         working-directory: void-packages
@@ -73,28 +95,33 @@ jobs:
         run: |
           set -euxo pipefail
 
+          mkdir -p hostdir/sources hostdir/ccache
+          ccache --max-size 1G || true
+          ccache --zero-stats || true
+
           if [ "${{ inputs.arch }}" = "x86_64" ]; then
             arch_args=()
           else
             arch_args=(-A "${{ inputs.arch }}")
           fi
 
-          ./xbps-src "${arch_args[@]}" binary-bootstrap
+          ./xbps-src -m ethereal "${arch_args[@]}" binary-bootstrap
 
           for pkg in ${{ inputs.packages }}; do
-            ./xbps-src "${arch_args[@]}" pkg "$pkg"
+            ./xbps-src -m ethereal "${arch_args[@]}" pkg "$pkg"
           done
+
+          ccache --show-stats || true
 
       - name: Show built packages
         working-directory: void-packages
         run: |
-          find hostdir/binpkgs -maxdepth 2 -type f -name '*.xbps' | sort
+          find hostdir/binpkgs -type f | sort
 
       - name: Upload binpkgs artifact
         uses: actions/upload-artifact@v4
         with:
           name: void-binpkgs-${{ inputs.arch }}-${{ github.run_number }}
-          path: |
-            void-packages/hostdir/binpkgs
+          path: void-packages/hostdir/binpkgs
           if-no-files-found: error
           retention-days: 14
