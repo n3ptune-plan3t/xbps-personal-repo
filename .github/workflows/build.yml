@@ -55,7 +55,6 @@ jobs:
         run: |
           cat >> etc/conf <<'EOF'
           XBPS_ALLOW_RESTRICTED=yes
-          XBPS_CHROOT_CMD=ethereal
           XBPS_CCACHE=yes
           EOF
 
@@ -95,7 +94,11 @@ jobs:
             cd "$GITHUB_WORKSPACE/void-packages"
             mkdir -p hostdir/sources hostdir/ccache
             export HOME=/home/builder
-            ./xbps-src -m ethereal binary-bootstrap
+
+            ./xbps-src binary-bootstrap
+
+            ln -sfn masterdir-x86_64 ethereal
+
             for pkg in ${{ inputs.packages }}; do
               ./xbps-src -m ethereal pkg "$pkg"
             done
