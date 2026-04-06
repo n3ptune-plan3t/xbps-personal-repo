@@ -33,7 +33,7 @@ jobs:
       - name: Install container tools
         shell: sh
         run: |
-          xbps-install -Suy bash xbps git rsync
+          xbps-install -Suy bash git rsync shadow xbps
 
       - name: Clone upstream void-packages
         shell: bash
@@ -79,25 +79,32 @@ jobs:
             void-ccache-x86_64-
             void-ccache-
 
-      - name: Build packages
-        working-directory: void-packages
+      - name: Create build user
         shell: bash
         run: |
-          set -euxo pipefail
+          useradd -m -s /bin/bash builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          mkdir -p /tmp/xbps-src
+          chown -R builder:builder /tmp/xbps-src
 
-          mkdir -p hostdir/sources hostdir/ccache
-
-          ./xbps-src -m ethereal binary-bootstrap
-
-          for pkg in ${{ inputs.packages }}; do
-            ./xbps-src -m ethereal pkg "$pkg"
-          done
+      - name: Build packages
+        shell: bash
+        run: |
+          su builder -c '
+            set -euxo pipefail
+            cd "$GITHUB_WORKSPACE/void-packages"
+            mkdir -p hostdir/sources hostdir/ccache
+            export HOME=/home/builder
+            ./xbps-src -m ethereal binary-bootstrap
+            for pkg in ${{ inputs.packages }}; do
+              ./xbps-src -m ethereal pkg "$pkg"
+            done
+          '
 
       - name: Show built packages
-        working-directory: void-packages
         shell: bash
         run: |
-          find hostdir/binpkgs -type f | sort
+          find void-packages/hostdir/binpkgs -type f | sort
 
       - name: Upload binpkgs artifact
         uses: actions/upload-artifact@v4
