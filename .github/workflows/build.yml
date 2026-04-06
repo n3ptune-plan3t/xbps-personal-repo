@@ -23,10 +23,6 @@ jobs:
     container:
       image: ghcr.io/void-linux/void-glibc-full:latest
 
-    defaults:
-      run:
-        shell: sh
-
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
@@ -35,15 +31,18 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install container tools
+        shell: sh
         run: |
-          xbps-install -Suy xbps git rsync
+          xbps-install -Suy bash xbps git rsync
 
       - name: Clone upstream void-packages
+        shell: bash
         run: |
           git clone --depth 1 --branch "${{ inputs.void_packages_ref }}" \
             https://github.com/void-linux/void-packages.git void-packages
 
       - name: Overlay custom packages
+        shell: bash
         run: |
           rsync -a srcpkgs/ void-packages/srcpkgs/
           if [ -d common ]; then
@@ -52,6 +51,7 @@ jobs:
 
       - name: Configure xbps-src
         working-directory: void-packages
+        shell: bash
         run: |
           cat >> etc/conf <<'EOF'
           XBPS_ALLOW_RESTRICTED=yes
@@ -81,8 +81,9 @@ jobs:
 
       - name: Build packages
         working-directory: void-packages
+        shell: bash
         run: |
-          set -eu
+          set -euxo pipefail
 
           mkdir -p hostdir/sources hostdir/ccache
 
@@ -94,6 +95,7 @@ jobs:
 
       - name: Show built packages
         working-directory: void-packages
+        shell: bash
         run: |
           find hostdir/binpkgs -type f | sort
 
