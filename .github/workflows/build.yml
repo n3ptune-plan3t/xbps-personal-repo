@@ -7,15 +7,6 @@ on:
         description: "Space-separated package names to build"
         required: true
         type: string
-      arch:
-        description: "Target architecture"
-        required: true
-        type: choice
-        default: x86_64
-        options:
-          - x86_64
-          - x86_64-musl
-          - i686
       void_packages_ref:
         description: "void-packages ref to build against"
         required: true
@@ -29,39 +20,38 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    container:
+      image: ghcr.io/void-linux/void-glibc-full:latest
+
     env:
-      CCACHE_DIR: ${{ github.workspace }}/void-packages/hostdir/ccache
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Check out overlay repo
         uses: actions/checkout@v5
 
-      - name: Install host tools
+      - name: Install container tools
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y curl git rsync xz-utils zstd libarchive-tools
-
-      - name: Install xbps static
-        run: |
-          curl -LO https://repo-default.voidlinux.org/static/xbps-static-latest.x86_64-musl.tar.xz
-          mkdir -p "$HOME/xbps-static"
-          tar -xJf xbps-static-latest.x86_64-musl.tar.xz -C "$HOME/xbps-static"
-          echo "$HOME/xbps-static/usr/bin" >> "$GITHUB_PATH"
+          xbps-install -Suy xbps git rsync
 
       - name: Clone upstream void-packages
+        shell: bash
         run: |
           git clone --depth 1 --branch "${{ inputs.void_packages_ref }}" \
             https://github.com/void-linux/void-packages.git void-packages
 
       - name: Overlay custom packages
+        shell: bash
         run: |
           rsync -a srcpkgs/ void-packages/srcpkgs/
           if [ -d common ]; then
             rsync -a common/ void-packages/common/
           fi
 
-      - name: Configure xbps-src for CI
+      - name: Configure xbps-src
         working-directory: void-packages
+        shell: bash
         run: |
           cat >> etc/conf <<'EOF'
           XBPS_ALLOW_RESTRICTED=yes
@@ -73,20 +63,20 @@ jobs:
         uses: actions/cache@v4
         with:
           path: void-packages/hostdir/sources
-          key: void-sources-${{ inputs.arch }}-${{ inputs.void_packages_ref }}-${{ hashFiles('srcpkgs/**/template', 'srcpkgs/**/files/**', 'common/shlibs') }}
+          key: void-sources-x86_64-${{ inputs.void_packages_ref }}-${{ hashFiles('srcpkgs/**/template', 'srcpkgs/**/files/**', 'common/shlibs') }}
           restore-keys: |
-            void-sources-${{ inputs.arch }}-${{ inputs.void_packages_ref }}-
-            void-sources-${{ inputs.arch }}-
+            void-sources-x86_64-${{ inputs.void_packages_ref }}-
+            void-sources-x86_64-
             void-sources-
 
       - name: Restore ccache
         uses: actions/cache@v4
         with:
           path: void-packages/hostdir/ccache
-          key: void-ccache-${{ inputs.arch }}-${{ inputs.void_packages_ref }}-${{ hashFiles('srcpkgs/**/template', 'srcpkgs/**/files/**', 'common/shlibs') }}
+          key: void-ccache-x86_64-${{ inputs.void_packages_ref }}
           restore-keys: |
-            void-ccache-${{ inputs.arch }}-${{ inputs.void_packages_ref }}-
-            void-ccache-${{ inputs.arch }}-
+            void-ccache-x86_64-${{ inputs.void_packages_ref }}
+            void-ccache-x86_64-
             void-ccache-
 
       - name: Build packages
@@ -96,32 +86,23 @@ jobs:
           set -euxo pipefail
 
           mkdir -p hostdir/sources hostdir/ccache
-          ccache --max-size 1G || true
-          ccache --zero-stats || true
 
-          if [ "${{ inputs.arch }}" = "x86_64" ]; then
-            arch_args=()
-          else
-            arch_args=(-A "${{ inputs.arch }}")
-          fi
-
-          ./xbps-src -m ethereal "${arch_args[@]}" binary-bootstrap
+          ./xbps-src -m ethereal binary-bootstrap
 
           for pkg in ${{ inputs.packages }}; do
-            ./xbps-src -m ethereal "${arch_args[@]}" pkg "$pkg"
+            ./xbps-src -m ethereal pkg "$pkg"
           done
-
-          ccache --show-stats || true
 
       - name: Show built packages
         working-directory: void-packages
+        shell: bash
         run: |
           find hostdir/binpkgs -type f | sort
 
       - name: Upload binpkgs artifact
         uses: actions/upload-artifact@v4
         with:
-          name: void-binpkgs-${{ inputs.arch }}-${{ github.run_number }}
+          name: void-binpkgs-x86_64-${{ github.run_number }}
           path: void-packages/hostdir/binpkgs
           if-no-files-found: error
           retention-days: 14
