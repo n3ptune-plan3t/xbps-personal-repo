@@ -1,0 +1,283 @@
+# Template file for 'helium'
+pkgname=helium
+version=0.10.8
+revision=1
+_chromiumver=146.0.7680.177
+_heliumlinuxver=0.10.8.1
+_rollup=4.22.4
+archs="x86_64*"
+_llvmver=21
+
+hostmakedepends="
+ clang${_llvmver} lld${_llvmver} llvm${_llvmver} compiler-rt${_llvmver}
+ bison git gperf hwids ninja nodejs perl pkg-config python3
+ libepoxy-devel libglib-devel rust rust-bindgen gn"
+
+makedepends="
+ alsa-lib-devel libdav1d-devel brotli-devel cups-devel elfutils-devel
+ fontconfig-devel freetype-devel gtk+3-devel libXScrnSaver-devel
+ libXcomposite-devel libXcursor-devel libXdamage-devel libXi-devel libXrandr-devel
+ libavif-devel libcap-devel libcurl-devel libdrm-devel
+ libexif-devel libflac-devel libgcrypt-devel libjpeg-turbo-devel libmtp-devel
+ libpng-devel libva-devel libwebp-devel libxml2-devel libxshmfence-devel
+ libxslt-devel minizip-devel mit-krb5-devel nss-devel opus-devel
+ pciutils-devel snappy-devel speech-dispatcher-devel speex-devel
+ xcb-proto zlib-devel libaom-devel libffi-devel libevdev-devel
+ compiler-rt${_llvmver} rust-std pipewire-devel pulseaudio-devel"
+
+depends="desktop-file-utils hicolor-icon-theme hwids xdg-utils"
+short_desc="Helium Browser"
+maintainer="Orphaned <orphan@voidlinux.org>"
+license="BSD-3-Clause, GPL-3.0-only"
+homepage="https://github.com/imputnet/helium"
+
+distfiles="
+ https://github.com/chromium-linux-tarballs/chromium-tarballs/releases/download/${_chromiumver}/chromium-${_chromiumver}-linux.tar.xz
+ https://github.com/imputnet/helium/archive/refs/tags/${version}.tar.gz
+ https://github.com/imputnet/helium-linux/archive/refs/tags/${_heliumlinuxver}.tar.gz
+ https://registry.npmjs.org/@rollup/wasm-node/-/wasm-node-${_rollup}.tgz"
+
+checksum="
+ REPLACE_CHROMIUM_TARBALL_SHA256
+ REPLACE_HELIUM_SHA256
+ REPLACE_HELIUM_LINUX_SHA256
+ ee49bf67bd9bee869405af78162d028e2af0fcfca80497404f56b1b99f272717"
+
+skip_extraction="wasm-node-${_rollup}.tgz"
+lib32disabled=yes
+
+create_wrksrc=yes
+build_wrksrc="chromium-${_chromiumver}"
+patch_args="-d ${build_wrksrc} -Np1"
+
+build_options="debug vaapi pulseaudio pipewire lto"
+build_options_default="vaapi pulseaudio pipewire lto"
+
+pre_patch() {
+  :
+}
+
+post_extract() {
+  local hdir="../helium-${version}"
+  local hlinuxdir="../helium-linux-${_heliumlinuxver}"
+  local cdir="chromium-${_chromiumver}"
+
+  rm -rv ${cdir}/third_party/devtools-frontend/src/node_modules/rollup
+  mkdir -p ${cdir}/third_party/devtools-frontend/src/node_modules/rollup
+  vsrcextract -C ${cdir}/third_party/devtools-frontend/src/node_modules/rollup \
+    --strip-components=1 "wasm-node-${_rollup}.tgz"
+
+  # Helium's Linux layer expects the browser repo to be available as helium-chromium.
+  ln -sfn "${hdir}" "../helium-chromium"
+}
+
+post_patch() {
+  local hdir="../helium-${version}"
+  local hlinuxdir="../helium-linux-${_heliumlinuxver}"
+
+  # prevent annoying errors when regenerating gni
+  vsed -i 's,^update_readme$,#update_readme,' \
+    third_party/libvpx/generate_gni.sh
+
+  # allow system dependencies in official builds
+  vsed -i 's/OFFICIAL_BUILD/GOOGLE_CHROME_BUILD/' \
+    tools/generate_shim_headers/generate_shim_headers.py
+
+  # Helium prune/patch/domsub flow
+  ${hdir}/utils/prune_binaries.py . ${hdir}/pruning.list
+  ${hdir}/utils/patches.py apply . ${hdir}/patches ${hlinuxdir}/patches
+  ${hdir}/utils/domain_substitution.py apply \
+    -r ${hdir}/domain_regex.list \
+    -f ${hdir}/domain_substitution.list \
+    -c build/domsubcache.tar.gz .
+
+  mkdir -p third_party/node/linux/node-linux-x64/bin
+  rm -f third_party/node/linux/node-linux-x64/bin/node
+  ln -s /usr/bin/node third_party/node/linux/node-linux-x64/bin/
+
+  # Helium branding/resources/versioning
+  python3 ${hdir}/utils/name_substitution.py --sub -t . --backup-path ../namesubs.tar
+  python3 ${hdir}/utils/helium_version.py \
+    --tree ${hdir} \
+    --platform-tree ${hlinuxdir} \
+    --chromium-tree .
+  python3 ${hdir}/utils/generate_resources.py \
+    ${hdir}/resources/generate_resources.txt \
+    ${hdir}/resources
+  python3 ${hdir}/utils/replace_resources.py \
+    ${hdir}/resources/helium_resources.txt \
+    ${hdir}/resources .
+}
+
+_setup_clang() {
+  export CC=clang
+  export CXX=clang++
+  export AR=llvm-ar
+  export NM=llvm-nm
+
+  # Personal build for Ryzen 3 3250U
+  export CFLAGS="-Wno-unknown-warning-option -fdebug-prefix-map=$wrksrc=. -march=znver1 -mtune=znver1"
+  export CXXFLAGS="-Wno-unknown-warning-option -fdebug-prefix-map=$wrksrc=. -march=znver1 -mtune=znver1"
+  export LDFLAGS=""
+
+  export BUILD_CC=clang
+  export BUILD_CXX=clang++
+  export BUILD_AR=llvm-ar
+  export BUILD_NM=llvm-nm
+  export BUILD_CFLAGS="-Wno-unknown-warning-option -march=znver1 -mtune=znver1"
+  export BUILD_CXXFLAGS="-Wno-unknown-warning-option -march=znver1 -mtune=znver1"
+}
+
+_setup_toolchain() {
+  _setup_clang
+  export RUSTC_BOOTSTRAP=1
+}
+
+do_configure() {
+  local system=() conf=()
+
+  system=(
+    flac
+    fontconfig
+    freetype
+    libdrm
+    libjpeg
+    libpng
+    libwebp
+    libxml
+    libxslt
+    opus
+  )
+
+  for LIB in "${system[@]}" libjpeg_turbo; do
+    find "third_party/$LIB" -type f \
+      \! -path "third_party/$LIB/chromium/*" \
+      \! -path "third_party/$LIB/google/*" \
+      \! -path './base/third_party/icu/*' \
+      \! -regex '.*\.\(gn\|gni\|isolate\)' \
+      -delete || :
+  done
+
+  build/linux/unbundle/replace_gn_files.py --system-libraries "${system[@]}"
+  third_party/libaddressinput/chromium/tools/update-strings.py
+
+  local clang_version="$(clang -dumpversion)"
+  conf=(
+    'use_sysroot=false'
+    'host_pkg_config="/usr/bin/pkg-config"'
+
+    'is_clang=true'
+    'use_lld=true'
+    'clang_use_chrome_plugins=false'
+    'clang_base_path="/usr"'
+    "clang_version=\"${clang_version%%.*}\""
+    'use_clang_modules=false'
+
+    'enable_rust=true'
+    'rust_sysroot_absolute="/usr"'
+    'rust_bindgen_root="/usr"'
+    "rustc_version=\"$(rustc --version | cut -d' ' -f2)\""
+
+    'node_version_check=false'
+    'is_debug=false'
+    "blink_symbol_level=$(vopt_if debug 1 0)"
+    "symbol_level=$(vopt_if debug 1 0)"
+    'icu_use_data_file=true'
+
+    'enable_widevine=true'
+    'use_system_harfbuzz=false'
+    'use_system_libffi=true'
+
+    'use_cups=true'
+    "use_vaapi=$(vopt_if vaapi true false)"
+    "use_pulseaudio=$(vopt_if pulseaudio true false)"
+    "link_pulseaudio=$(vopt_if pulseaudio true false)"
+    "rtc_use_pipewire=$(vopt_if pipewire true false)"
+
+    'proprietary_codecs=true'
+    'ffmpeg_branding="Chrome"'
+
+    'treat_warnings_as_errors=false'
+    'fatal_linker_warnings=false'
+    'disable_fieldtrial_testing_config=true'
+    'is_official_build=true'
+    'is_cfi=false'
+    'use_cfi_icall=false'
+
+    "use_thin_lto=$(vopt_if lto true false)"
+    'chrome_pgo_phase=0'
+
+    # Keep Helium Linux defaults that match your needs
+    'use_kerberos=false'
+    'use_sysroot=true'
+    'use_system_libffi=false'
+    'enable_mdns=false'
+    'enable_remoting=false'
+    'enable_reporting=false'
+    'enable_service_discovery=false'
+    'enable_hangout_services_extension=false'
+    'build_with_tflite_lib=false'
+    'safe_browsing_mode=0'
+
+    'target_cpu="x64"'
+    'custom_toolchain="//build/toolchain/linux/unbundle:default"'
+    'host_toolchain="//build/toolchain/linux/unbundle:default"'
+  )
+
+  _setup_toolchain
+  gn gen out/Release --args="${conf[*]}"
+}
+
+do_build() {
+  _setup_toolchain
+  ccache -z
+  CCACHE_SLOPPINESS=include_file_mtime ninja -C out/Release ${makejobs} \
+    chrome chrome_sandbox chromedriver chrome_crashpad_handler
+  ccache -s
+}
+
+do_install() {
+  vinstall out/Release/chrome 755 usr/lib/${pkgname} ${pkgname}
+  vinstall out/Release/chrome_sandbox 4755 usr/lib/${pkgname} chrome-sandbox
+  vinstall out/Release/chrome_crashpad_handler 755 usr/lib/${pkgname} chrome_crashpad_handler
+  vinstall out/Release/chromedriver 755 usr/lib/${pkgname} chromedriver
+  vinstall out/Release/libEGL.so 755 usr/lib/${pkgname} libEGL.so
+  vinstall out/Release/libGLESv2.so 755 usr/lib/${pkgname} libGLESv2.so
+  vinstall out/Release/libvk_swiftshader.so 755 usr/lib/${pkgname} libvk_swiftshader.so
+  vinstall out/Release/vk_swiftshader_icd.json 755 usr/lib/${pkgname} vk_swiftshader_icd.json
+
+  vcopy "out/Release/*.bin" usr/lib/${pkgname}
+  vcopy "out/Release/*.pak" usr/lib/${pkgname}
+
+  vmkdir usr/lib/${pkgname}/locales
+  vcopy "out/Release/locales/*.pak" usr/lib/${pkgname}/locales
+  vinstall out/Release/icudtl.dat 0644 usr/lib/${pkgname}
+
+  # Initial draft: reuse Chromium icon install until Helium icon paths are finalized
+  for size in 24 48 64 128 256; do
+    vinstall "chrome/app/theme/chromium/product_logo_${size}.png" \
+      644 usr/share/icons/hicolor/${size}x${size}/apps ${pkgname}.png
+  done
+  for size in 16 32; do
+    vinstall "chrome/app/theme/default_100_percent/chromium/product_logo_${size}.png" \
+      644 usr/share/icons/hicolor/${size}x${size}/apps ${pkgname}.png
+  done
+
+  vbin ${FILESDIR}/helium.sh ${pkgname}
+  vlicense LICENSE
+
+  ln -sf /usr/lib/${pkgname}/chromedriver ${DESTDIR}/usr/bin/chromedriver
+
+  vinstall chrome/installer/linux/common/desktop.template 644 \
+    usr/share/applications ${pkgname}.desktop
+  vman chrome/app/resources/manpage.1.in ${pkgname}.1
+
+  sed -i \
+    -e 's/@@MENUNAME/Helium/g' \
+    -e 's/@@PACKAGE/helium/g' \
+    -e 's/@@usr_bin_symlink_name/helium/g' \
+    -e '/@@uri_scheme/d' \
+    -e '/@@extra_desktop_entries/d' \
+    ${DESTDIR}/usr/share/man/man1/${pkgname}.1 \
+    ${DESTDIR}/usr/share/applications/${pkgname}.desktop
+}
