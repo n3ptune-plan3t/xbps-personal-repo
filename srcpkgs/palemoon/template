@@ -1,9 +1,9 @@
-# Template file for 'palemoon-bin'
-pkgname=palemoon-bin
+# Template file for 'palemoon'
+pkgname=palemoon
 version=34.1.0
 revision=1
 short_desc="Open source web browser based on Firefox focusing on efficiency"
-maintainer="Bernhard Landauer <oberon@manjaro.org>"
+maintainer="np <np@f.org>"
 license="MPL-2.0, GPL-2.0-or-later, LGPL-2.1-or-later"
 homepage="http://linux.palemoon.org/"
 distfiles="https://rm-eu.palemoon.org/release/palemoon-${version}.linux-x86_64-gtk2.tar.xz
