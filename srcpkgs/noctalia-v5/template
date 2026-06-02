@@ -17,3 +17,7 @@ license="MIT"
 homepage="https://github.com/noctalia-dev/noctalia-shell"
 distfiles="https://github.com/noctalia-dev/noctalia-shell/archive/${_commit}.tar.gz"
 checksum=909ef0c7135be38398829ae37636be0c5c599069537684579b4897d6a2d803d0
+
+post_install() {
+ vlicense LICENSE
+}
