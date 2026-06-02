@@ -1,0 +1,19 @@
+# Template file for 'noctalia-v5'
+pkgname=noctalia-v5
+version=5.0.0
+revision=1
+build_style=meson
+_commit=457e00b0d76757ac465eaeeebb18ecb161a3d839
+wrksrc=noctalia-shell-${_commit}
+hostmakedepends="git pkg-config wayland-devel wayland-protocols"
+makedepends="wayland-devel wayland-protocols MesaLib-devel
+ freetype-devel fontconfig-devel cairo-devel pango-devel harfbuzz-devel
+ libxkbcommon-devel glib-devel sdbus-c++-devel pipewire-devel
+ pam-devel polkit-devel libcurl-devel libwebp-devel librsvg-devel
+ libqalculate-devel libxml2-devel jemalloc-devel"
+short_desc="Lightweight Wayland shell and bar built directly on Wayland + OpenGL ES"
+maintainer="Orphaned <orphan@voidlinux.org>"
+license="MIT"
+homepage="https://github.com/noctalia-dev/noctalia-shell"
+distfiles="https://github.com/noctalia-dev/noctalia-shell/archive/${_commit}.tar.gz"
+checksum=909ef0c7135be38398829ae37636be0c5c599069537684579b4897d6a2d803d0
