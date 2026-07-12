@@ -15,7 +15,7 @@ fi
 # itself, needing a second pass to update everything else.
 xbps-install -Suy xbps
 xbps-install -Suy
-xbps-install -Sy bash git sudo
+xbps-install -Sy bash git sudo xtools
 
 id builder >/dev/null 2>&1 || useradd -m builder
 echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
@@ -31,6 +31,14 @@ cd /home/builder/void-packages
 
 # xbps-src refuses to run as root — everything below runs as 'builder'.
 su builder -c './xbps-src binary-bootstrap'
+
+# Fetch the distfile and write its real sha256 into the template's
+# checksum= field (-i = in place). This is xtools' xgensum, the
+# equivalent of abuild's `abuild checksum`. Run before the actual
+# build so a stale/placeholder checksum never causes a failed build —
+# it always reflects whatever we just downloaded.
+su builder -c "xgensum -i srcpkgs/$PKG/template"
+
 su builder -c "./xbps-src pkg $PKG"
 
 mkdir -p /repo/out
