@@ -1,23 +1,21 @@
-# Template file for 'noctalia-v5'
-pkgname=noctalia-v5
+# Template file for 'noctalia-shell'
+pkgname=noctalia-shell
 version=5.0.0
 revision=1
+archs="x86_64"
 build_style=meson
-_commit=457e00b0d76757ac465eaeeebb18ecb161a3d839
-wrksrc=noctalia-shell-${_commit}
-hostmakedepends="git pkg-config wayland-devel wayland-protocols"
-makedepends="wayland-devel wayland-protocols MesaLib-devel
- freetype-devel fontconfig-devel cairo-devel pango-devel harfbuzz-devel
- libxkbcommon-devel glib-devel sdbus-c++-devel pipewire-devel
- pam-devel polkit-devel libcurl-devel libwebp-devel librsvg-devel
- libqalculate-devel libxml2-devel jemalloc-devel"
-short_desc="Lightweight Wayland shell and bar built directly on Wayland + OpenGL ES"
-maintainer="Orphaned <orphan@voidlinux.org>"
+hostmakedepends="just meson ninja pkg-config"
+makedepends="sdbus-c++-devel cmake wayland-devel wayland-protocols freetype-devel fontconfig-devel cairo-devel pango-devel librsvg-devel libxkbcommon-devel polkit-devel pipewire-devel wireplumber-devel libcurl-devel libqalculate-devel pam-devel libepoxy-devel"
+depends="ImageMagick brightnessctl ffmpeg qt6-multimedia cliphist cava wlsunset power-profiles-daemon ddcutil"
+short_desc="Sleek and minimal desktop shell"
+maintainer="you <you@you.com>"
 license="MIT"
 homepage="https://github.com/noctalia-dev/noctalia-shell"
-distfiles="https://github.com/noctalia-dev/noctalia-shell/archive/${_commit}.tar.gz"
-checksum=909ef0c7135be38398829ae37636be0c5c599069537684579b4897d6a2d803d0
+changelog="https://github.com/noctalia-dev/${pkgname}/releases/tag/v${version}"
+distfiles="https://github.com/noctalia-dev/${pkgname}/releases/download/v${version}-beta2/noctalia-v${version}-beta2.tar.gz"
+checksum=bdd8600d15689439edc1c7c3c3167993b7d92fbb92ba283eb522511194c0514a
+CXXFLAGS+=" -std=c++23
 
 post_install() {
- vlicense LICENSE
+	vlicense LICENSE
 }
