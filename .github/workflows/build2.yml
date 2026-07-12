@@ -1,0 +1,42 @@
+name: Build Void package like alpine
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package name to build (must match srcpkgs/<name>/template)'
+        required: true
+      libc:
+        description: 'C library variant'
+        required: true
+        default: 'glibc'
+        type: choice
+        options:
+          - glibc
+          - musl
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Allow unprivileged user namespaces (Ubuntu 24.04 AppArmor restriction)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Build package in Void container
+        run: |
+          docker run --rm --privileged \
+            -e PKG="${{ github.event.inputs.package }}" \
+            -v "${{ github.workspace }}:/repo" \
+            -w /repo \
+            "ghcr.io/void-linux/void-${{ github.event.inputs.libc }}-full:latest" \
+            sh /repo/build.sh
+
+      - name: Upload built package
+        uses: actions/upload-artifact@v4
+        with:
+          name: xbps-${{ github.event.inputs.package }}-${{ github.event.inputs.libc }}
+          path: out/
+          if-no-files-found: error
