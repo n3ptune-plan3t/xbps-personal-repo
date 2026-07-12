@@ -1,6 +1,6 @@
 # Template file for 'scroll'
 pkgname=scroll
-version=1.12.8
+version=1.12.16
 revision=1
 build_style=meson
 configure_args="--auto-features=enabled -Dsd-bus-provider=basu
@@ -22,7 +22,7 @@ license="MIT"
 homepage="https://github.com/dawsers/scroll"
 changelog="https://github.com/dawsers/scroll/releases"
 distfiles="https://github.com/dawsers/scroll/archive/refs/tags/${version}.tar.gz"
-checksum=b3c03def43ddf7bac3a18fe0be6600aee06d1c8b10b423c12be4e85b74b97c3d
+
 
 post_install() {
 	vlicense LICENSE
