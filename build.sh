@@ -21,11 +21,13 @@ echo "builder ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/builder
 git clone --depth 1 https://github.com/void-linux/void-packages /home/builder/void-packages
 chown -R builder /home/builder/void-packages
 
-# Overlay our own template(s) onto the fresh void-packages tree.
-# rm -rf first: if the destination already exists (true for any
-# package Void already ships, like enlightenment), `cp -r` would
-# nest our files inside it instead of replacing it, silently
-# leaving the stock template in place.
+# Personal build: target this machine's CPU (Ryzen/Vega, Zen 1) for every
+# package built here, applied globally rather than per-template.
+cat >> /home/builder/void-packages/etc/conf <<'EOF'
+XBPS_CFLAGS+=" -march=znver1 -mtune=znver1"
+XBPS_CXXFLAGS+=" -march=znver1 -mtune=znver1"
+EOF
+
 rm -rf "/home/builder/void-packages/srcpkgs/$PKG"
 cp -r "/repo/srcpkgs/$PKG" "/home/builder/void-packages/srcpkgs/$PKG"
 chown -R builder "/home/builder/void-packages/srcpkgs/$PKG"
