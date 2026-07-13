@@ -1,0 +1,112 @@
+# Template file for 'moksha'
+pkgname=moksha
+version=0.4.2
+revision=1
+# Rolling release: always build from latest git master
+# To update: bump revision and rebuild
+build_style=gnu-configure
+configure_args="
+ --prefix=/usr
+ --sysconfdir=/etc
+ --disable-illume2
+ --disable-ofono
+ --disable-bluez4
+ --disable-connman
+ --disable-packagekit
+ --disable-wizard
+ --disable-install-sysactions
+ --disable-wayland
+ --disable-xwayland
+ --enable-egl
+ --disable-pixman
+"
+hostmakedepends="pkg-config automake libtool gettext-devel intltool git"
+makedepends="
+ efl-devel
+ elementary-devel
+ glib-devel
+ libpng-devel
+ libjpeg-turbo-devel
+ libX11-devel
+ libXext-devel
+ libXrender-devel
+ libXcomposite-devel
+ libXdamage-devel
+ libXfixes-devel
+ libXrandr-devel
+ libXcursor-devel
+ libXi-devel
+ libXinerama-devel
+ libxcb-devel
+ libxkbcommon-devel
+ libxkbcommon-x11-devel
+ libxkbfile-devel
+ libudev-devel
+ dbus-devel
+ libexif-devel
+ librsvg-devel
+ poppler-devel
+ libraw-devel
+ libspectre-devel
+ libwebp-devel
+ lua51-devel
+ luajit-devel
+ libsndfile-devel
+ pulseaudio-devel
+ alsa-lib-devel
+ gstreamer1-devel
+ gst-plugins-base1-devel
+ pipewire-devel
+"
+short_desc="Fork of the Enlightenment DR17 window manager"
+maintainer="Your Name <your.email@example.com>"
+license="BSD-2-Clause"
+homepage="https://www.bodhilinux.com/moksha-desktop/"
+
+# Rolling release: fetch latest master instead of fixed tarball
+# Source is cloned during do_fetch() phase
+
+pre_fetch() {
+	# Clone latest master from JeffHoogland/moksha
+	git clone --depth=1 https://github.com/JeffHoogland/moksha.git ${wrksrc}
+}
+
+# Skip standard distfiles/checksum since we use git
+distfiles=""
+skip_extraction=yes
+
+do_fetch() {
+	: # Handled in pre_fetch
+}
+
+do_extract() {
+	: # Already extracted by git clone
+}
+
+pre_configure() {
+	NOCONFIGURE=1 ./autogen.sh
+}
+
+post_install() {
+	vlicense COPYING
+	# Install xsessions desktop file
+	vmkdir usr/share/xsessions
+	vinstall ${FILESDIR}/moksha.desktop 644 usr/share/xsessions
+}
+
+moksha-profiles_package() {
+	short_desc="Default Moksha desktop profiles (Bodhi Linux defaults)"
+	depends="moksha>=${version}_${revision}"
+	noarch=yes
+	pre_fetch() {
+		git clone --depth=1 https://github.com/JeffHoogland/moksha-profiles.git ${wrksrc}
+	}
+	distfiles=""
+	skip_extraction=yes
+	do_fetch() { :; }
+	do_extract() { :; }
+	pkg_install() {
+		vmkdir usr/share/enlightenment/data/config
+		vcopy "bodhi" usr/share/enlightenment/data/config/
+	}
+}
