@@ -1,0 +1,103 @@
+--- a/data/tools/enlightenment_sysactions.c	2024-01-01 00:00:00.000000000 +0000
++++ b/data/tools/enlightenment_sysactions.c	2026-07-13 23:00:00.000000000 +0000
+@@ -1,3 +1,4 @@
++/* PATCHED FOR VOID LINUX - runit init system */
+ /*
+  * Enlightenment - System Actions
+  * Replaces systemd calls with runit/sv equivalents for Void Linux
+@@ -40,6 +41,8 @@
+ #include <sys/types.h>
+ #include <unistd.h>
+
++#define VOID_LINUX_RUNIT 1
++
+ /*
+  * System action commands
+  * Original: systemd calls
+@@ -47,6 +50,7 @@
+  */
+
+ static const char *_run_sudo(const char *cmd, const char *param);
++static const char *_run_void_cmd(const char *action);
+
+ /*
+  * Action handlers
+@@ -54,6 +58,7 @@
+ static void
+ _action_shutdown(void)
+ {
++#ifdef VOID_LINUX_RUNIT
++   /* Void Linux: use runit or loginctl */
++   _run_void_cmd("poweroff");
++#else
+    /* Original: systemd */
+    _run_sudo("systemctl", "poweroff");
++#endif
+ }
+
+ static void
+ _action_reboot(void)
+ {
++#ifdef VOID_LINUX_RUNIT
++   _run_void_cmd("reboot");
++#else
+    _run_sudo("systemctl", "reboot");
++#endif
+ }
+
+ static void
+ _action_suspend(void)
+ {
++#ifdef VOID_LINUX_RUNIT
++   /* Void Linux: prefer loginctl if available, fallback to zzz */
++   if (access("/usr/bin/loginctl", X_OK) == 0)
++     _run_sudo("loginctl", "suspend");
++   else
++     _run_sudo("zzz", NULL);
++#else
+    _run_sudo("systemctl", "suspend");
++#endif
+ }
+
+ static void
+ _action_hibernate(void)
+ {
++#ifdef VOID_LINUX_RUNIT
++   if (access("/usr/bin/loginctl", X_OK) == 0)
++     _run_sudo("loginctl", "hibernate");
++   else
++     _run_sudo("ZZZ", NULL);
++#else
+    _run_sudo("systemctl", "hibernate");
++#endif
+ }
+
+ static void
+ _action_hybrid_sleep(void)
+ {
++#ifdef VOID_LINUX_RUNIT
++   if (access("/usr/bin/loginctl", X_OK) == 0)
++     _run_sudo("loginctl", "hybrid-sleep");
++#else
+    _run_sudo("systemctl", "hybrid-sleep");
++#endif
+ }
+
++/*
++ * Void Linux helper: execute action via runit or direct command
++ */
++static const char *
++_run_void_cmd(const char *action)
++{
++   /* Try loginctl first (works with elogind on Void) */
++   if (access("/usr/bin/loginctl", X_OK) == 0)
++     {
++        return _run_sudo("loginctl", action);
++     }
++   /* Fallback: direct poweroff/reboot (requires root) */
++   return _run_sudo(action, NULL);
++}
++
+ static const char *
+ _run_sudo(const char *cmd, const char *param)
+ {
