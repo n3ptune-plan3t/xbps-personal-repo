@@ -1,0 +1,20 @@
+pkgname=msword
+version=0.0.1
+revision=1
+archs="x86_64"
+short_desc="Microsoft Word with Tauri"
+maintainer="ffff <ff@ff.org>"
+license="BSD"
+homepage="https://www.wps.com/"
+changelog="https://www.wps.com/whatsnew/linux/"
+checksum=
+nodebug=yes
+nostrip=yes
+
+do_install() {
+    # Extract the control and data tarballs from your deb file
+    ar x ${XBPS_SRCPKGDIR}/${pkgname}/Microsoft.Word_0.0.1_amd64.deb
+    
+    # Extract the actual data into the installation destination directory
+    tar -xf data.tar.xz -C ${DESTDIR}
+}
