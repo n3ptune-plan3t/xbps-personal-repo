@@ -1,0 +1,99 @@
+--- a/src/modules/mixer/e_mod_main.c	2024-01-01 00:00:00.000000000 +0000
++++ b/src/modules/mixer/e_mod_main.c	2026-07-13 23:00:00.000000000 +0000
+@@ -1,3 +1,4 @@
++/* PATCHED FOR VOID LINUX - PipeWire-safe mixer */
+ #include "e.h"
+ #include "e_mod_main.h"
+
+@@ -180,6 +181,9 @@
+ static Eina_Bool _mixer_pulse_ready = EINA_FALSE;
+ static Eina_Bool _mixer_alsa_ready = EINA_FALSE;
+
++/* Void Linux: timeout to prevent hanging when PulseAudio/PipeWire is down */
++#define MIXER_INIT_TIMEOUT_SEC 2
++
+ /* Module setup */
+ E_API E_Module_Api e_modapi = { E_MODULE_API_VERSION, "Mixer" };
+
+@@ -220,6 +224,7 @@
+ _mixer_init(void)
+ {
+    E_Mixer_Module_Context *ctxt;
++   time_t start_time;
+
+    ctxt = E_NEW(E_Mixer_Module_Context, 1);
+    if (!ctxt) return NULL;
+@@ -230,6 +235,8 @@
+    _mixer_module_context = ctxt;
+    _mixer_using_default = EINA_FALSE;
+
++   start_time = time(NULL);
++
+    /* Try PulseAudio first */
+    if (e_mixer_pulse_init())
+      {
+@@ -237,6 +244,15 @@
+         _mixer_pulse_ready = EINA_TRUE;
+         _mixer_using_default = EINA_TRUE;
+      }
++   else
++     {
++        /* Void Linux: if PipeWire is not running, don't hang */
++        if ((time(NULL) - start_time) > MIXER_INIT_TIMEOUT_SEC)
++          {
++             WRN("MIXER: PulseAudio/PipeWire init timed out, skipping mixer");
++             goto init_failed;
++          }
++     }
++
+    /* Fallback to ALSA */
+    if (!_mixer_pulse_ready)
+      {
+@@ -247,6 +263,7 @@
+          }
+      }
+
++init_failed:
+    if (!_mixer_pulse_ready && !_mixer_alsa_ready)
+      {
+         WRN("MIXER: No audio backend available (PulseAudio/ALSA). "
+@@ -260,6 +277,8 @@
+         ecore_timer_add(5.0, _mixer_fallback_timer, ctxt);
+      }
+
++   /* Void Linux: always succeed module init even if mixer is non-functional */
++   /* This prevents Moksha from hanging at startup */
+    return ctxt;
+ }
+
+@@ -270,6 +289,13 @@
+    if (!ctxt) return;
+
+    _mixer_timer_del(ctxt);
++
++   /* Void Linux: guard against NULL backend cleanup */
++   if (!_mixer_pulse_ready && !_mixer_alsa_ready)
++     {
++        free(ctxt);
++        _mixer_module_context = NULL;
++        return;
++     }
+
+    if (ctxt->mixer)
+      {
+@@ -310,6 +336,15 @@
+    if (!ctxt) return;
+
+    _mixer_timer_del(ctxt);
++
++   /* Void Linux: if no backend is ready, just free and return */
++   if (!_mixer_pulse_ready && !_mixer_alsa_ready)
++     {
++        free(ctxt);
++        _mixer_module_context = NULL;
++        return;
++     }
++
+    if (ctxt->mixer)
+      {
+         e_mod_mixer_save(ctxt->mixer);
