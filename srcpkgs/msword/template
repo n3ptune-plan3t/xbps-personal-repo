@@ -17,5 +17,5 @@ do_install() {
     ar x ${XBPS_SRCPKGDIR}/${pkgname}/Microsoft.Word_0.0.1_amd64.deb
     
     # Extract the actual data into the installation destination directory
-    tar -xf data.tar.xz -C ${DESTDIR}
+    tar -xf data.tar.gz -C ${DESTDIR}
 }
