@@ -23,7 +23,6 @@ configure_args="
 hostmakedepends="pkg-config automake libtool gettext-devel intltool git"
 makedepends="
  efl-devel
- elementary-devel
  glib-devel
  libpng-devel
  libjpeg-turbo-devel
