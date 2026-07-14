@@ -1,99 +1,116 @@
---- a/src/modules/mixer/e_mod_main.c	2024-01-01 00:00:00.000000000 +0000
-+++ b/src/modules/mixer/e_mod_main.c	2026-07-13 23:00:00.000000000 +0000
-@@ -1,3 +1,4 @@
-+/* PATCHED FOR VOID LINUX - PipeWire-safe mixer */
- #include "e.h"
- #include "e_mod_main.h"
+--- a/src/modules/mixer/lib/epulse.c
++++ b/src/modules/mixer/lib/epulse.c
+@@ -1,6 +1,9 @@
+ #include "epulse.h"
 
-@@ -180,6 +181,9 @@
- static Eina_Bool _mixer_pulse_ready = EINA_FALSE;
- static Eina_Bool _mixer_alsa_ready = EINA_FALSE;
-
-+/* Void Linux: timeout to prevent hanging when PulseAudio/PipeWire is down */
-+#define MIXER_INIT_TIMEOUT_SEC 2
++#define EPULSE_CONNECT_TIMEOUT 5.0
++#define EPULSE_MAX_RECONNECT_ATTEMPTS 3
 +
- /* Module setup */
- E_API E_Module_Api e_modapi = { E_MODULE_API_VERSION, "Mixer" };
+ typedef struct _Epulse_Context Epulse_Context;
+ struct _Epulse_Context {
+    pa_mainloop_api api;
+@@ -8,6 +11,8 @@ struct _Epulse_Context {
+    pa_context_state_t state;
+    void *data;
++   int reconnect_attempts;
++   Ecore_Timer *connect_timer;
+ };
 
-@@ -220,6 +224,7 @@
- _mixer_init(void)
+ static unsigned int _init_count = 0;
+@@ -512,6 +517,24 @@ static Eina_Bool _epulse_connect(void *data);
+ static void
+ _epulse_pa_state_cb(pa_context *context, void *data)
  {
-    E_Mixer_Module_Context *ctxt;
-+   time_t start_time;
+    pa_operation *o;
++   Epulse_Context *ctx = data;
 
-    ctxt = E_NEW(E_Mixer_Module_Context, 1);
-    if (!ctxt) return NULL;
-@@ -230,6 +235,8 @@
-    _mixer_module_context = ctxt;
-    _mixer_using_default = EINA_FALSE;
-
-+   start_time = time(NULL);
-+
-    /* Try PulseAudio first */
-    if (e_mixer_pulse_init())
+    switch (pa_context_get_state(context))
       {
-@@ -237,6 +244,15 @@
-         _mixer_pulse_ready = EINA_TRUE;
-         _mixer_using_default = EINA_TRUE;
-      }
-+   else
+@@ -524,6 +547,14 @@ _epulse_pa_state_cb(pa_context *context, void *data)
+
+       case PA_CONTEXT_READY:
+          {
++            /* Reset reconnect attempts on successful connection */
++            ctx->reconnect_attempts = 0;
++            if (ctx->connect_timer)
++              {
++                 ecore_timer_del(ctx->connect_timer);
++                 ctx->connect_timer = NULL;
++              }
++
+             pa_context_set_subscribe_callback(context, _subscribe_cb, ctx);
+             if (!(o = pa_context_subscribe(context, (pa_subscription_mask_t)
+                                            (PA_SUBSCRIPTION_MASK_SINK|
+@@ -577,8 +608,33 @@ _epulse_pa_state_cb(pa_context *context, void *data)
+
+       case PA_CONTEXT_FAILED:
+          WRN("PA_CONTEXT_FAILED");
++         ctx->reconnect_attempts++;
++         if (ctx->reconnect_attempts >= EPULSE_MAX_RECONNECT_ATTEMPTS)
++           {
++              ERR("Max reconnection attempts reached. PulseAudio not available.");
++              ecore_event_add(DISCONNECTED, NULL, NULL, NULL);
++              return;
++           }
+          ecore_event_add(DISCONNECTED, NULL, NULL, NULL);
+-         _epulse_connect(data);
++         /* Schedule reconnection with delay */
++         if (!ctx->connect_timer)
++           {
++              ctx->connect_timer = ecore_timer_add(EPULSE_CONNECT_TIMEOUT,
++                                                    (Ecore_Task_Cb)_epulse_connect,
++                                                    data);
++           }
+          return;
+
+       case PA_CONTEXT_TERMINATED:
+@@ -594,6 +650,12 @@ static Eina_Bool
+ _epulse_connect(void *data)
+ {
+    pa_proplist *proplist;
+    Epulse_Context *c = data;
+
++   /* Check if we've exceeded max reconnect attempts */
++   if (c->reconnect_attempts >= EPULSE_MAX_RECONNECT_ATTEMPTS)
 +     {
-+        /* Void Linux: if PipeWire is not running, don't hang */
-+        if ((time(NULL) - start_time) > MIXER_INIT_TIMEOUT_SEC)
-+          {
-+             WRN("MIXER: PulseAudio/PipeWire init timed out, skipping mixer");
-+             goto init_failed;
-+          }
++        return ECORE_CALLBACK_CANCEL;
 +     }
 +
-    /* Fallback to ALSA */
-    if (!_mixer_pulse_ready)
-      {
-@@ -247,6 +263,7 @@
-          }
-      }
-
-+init_failed:
-    if (!_mixer_pulse_ready && !_mixer_alsa_ready)
-      {
-         WRN("MIXER: No audio backend available (PulseAudio/ALSA). "
-@@ -260,6 +277,8 @@
-         ecore_timer_add(5.0, _mixer_fallback_timer, ctxt);
-      }
-
-+   /* Void Linux: always succeed module init even if mixer is non-functional */
-+   /* This prevents Moksha from hanging at startup */
-    return ctxt;
+    proplist = pa_proplist_new();
+    pa_proplist_sets(proplist, PA_PROP_APPLICATION_NAME, "Efl Volume Control");
+    pa_proplist_sets(proplist, PA_PROP_APPLICATION_ID,
+@@ -622,6 +684,7 @@ _epulse_connect(void *data)
+  err:
+    pa_proplist_free(proplist);
+    return ECORE_CALLBACK_RENEW;
  }
 
-@@ -270,6 +289,13 @@
-    if (!ctxt) return;
-
-    _mixer_timer_del(ctxt);
-+
-+   /* Void Linux: guard against NULL backend cleanup */
-+   if (!_mixer_pulse_ready && !_mixer_alsa_ready)
-+     {
-+        free(ctxt);
-+        _mixer_module_context = NULL;
-+        return;
-+     }
-
-    if (ctxt->mixer)
+ int
+ epulse_init(void)
+@@ -633,6 +696,8 @@ epulse_init(void)
+    ctx = calloc(1, sizeof(Epulse_Context));
+    if (!ctx)
       {
-@@ -310,6 +336,15 @@
-    if (!ctxt) return;
+         ERR("Could not create Epulse Context");
+         return 0;
+      }
 
-    _mixer_timer_del(ctxt);
++   ctx->reconnect_attempts = 0;
++   ctx->connect_timer = NULL;
 +
-+   /* Void Linux: if no backend is ready, just free and return */
-+   if (!_mixer_pulse_ready && !_mixer_alsa_ready)
+    DISCONNECTED = ecore_event_type_new();
+    SINK_ADDED = ecore_event_type_new();
+@@ -673,6 +738,12 @@ epulse_shutdown(void)
+    _init_count--;
+    if (_init_count > 0)
+      return;
+
++   if (ctx->connect_timer)
 +     {
-+        free(ctxt);
-+        _mixer_module_context = NULL;
-+        return;
++        ecore_timer_del(ctx->connect_timer);
++        ctx->connect_timer = NULL;
 +     }
 +
-    if (ctxt->mixer)
-      {
-         e_mod_mixer_save(ctxt->mixer);
+    pa_context_unref(ctx->context);
+    free(ctx);
+    ctx = NULL;
