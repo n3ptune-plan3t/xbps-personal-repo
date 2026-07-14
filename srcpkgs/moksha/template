@@ -1,111 +1,30 @@
 # Template file for 'moksha'
+_commit=b11ceca00c556a9b6b5f1211cd0f5165d3a3b4b8
 pkgname=moksha
 version=0.4.2
 revision=1
-# Rolling release: always build from latest git master
-# To update: bump revision and rebuild
+create_wrksrc=yes
 build_style=gnu-configure
-configure_args="
- --prefix=/usr
- --sysconfdir=/etc
- --disable-illume2
- --disable-ofono
- --disable-bluez4
- --disable-connman
- --disable-packagekit
- --disable-wizard
- --disable-install-sysactions
- --disable-wayland
- --disable-xwayland
- --enable-egl
- --disable-pixman
-"
-hostmakedepends="pkg-config automake libtool gettext-devel intltool git"
-makedepends="
- efl-devel
- glib-devel
- libpng-devel
- libjpeg-turbo-devel
- libX11-devel
- libXext-devel
- libXrender-devel
- libXcomposite-devel
- libXdamage-devel
- libXfixes-devel
- libXrandr-devel
- libXcursor-devel
- libXi-devel
- libXinerama-devel
- libxcb-devel
- libxkbcommon-devel
- libxkbcommon-x11-devel
- libxkbfile-devel
- libudev-devel
- dbus-devel
- libexif-devel
- librsvg-devel
- poppler-devel
- libraw-devel
- libspectre-devel
- libwebp-devel
- lua51-devel
- luajit-devel
- libsndfile-devel
- pulseaudio-devel
- alsa-lib-devel
- gstreamer1-devel
- gst-plugins-base1-devel
- pipewire-devel
-"
-short_desc="Fork of the Enlightenment DR17 window manager"
-maintainer="Your Name <your.email@example.com>"
+configure_args="--disable-wayland-clients --disable-bodhi --disable-files
+ --enable-pam"
+hostmakedepends="pkg-config automake autoconf libtool"
+makedepends="efl-devel libxcb-devel libX11-devel libXext-devel dbus-devel
+ pulseaudio-devel udisks2-devel libexif-devel libxkbcommon-devel
+ pam-devel xcb-util-wm-devel"
+depends="desktop-file-utils hicolor-icon-theme xkeyboard-config"
+short_desc="Advanced window manager for X11 based on Enlightenment DR17"
+maintainer="ziky <ziky@localhost>"
 license="BSD-2-Clause"
-homepage="https://www.bodhilinux.com/moksha-desktop/"
+homepage="https://github.com/JeffHoogland/moksha"
+distfiles="https://github.com/JeffHoogland/moksha/archive/${_commit}.tar.gz"
+checksum=
 
-# Rolling release: fetch latest master instead of fixed tarball
-# Source is cloned during do_fetch() phase
-
-pre_fetch() {
-	# Clone latest master from JeffHoogland/moksha
-	git clone --depth=1 https://github.com/JeffHoogland/moksha.git ${wrksrc}
-}
-
-# Skip standard distfiles/checksum since we use git
-distfiles=""
-skip_extraction=yes
-
-do_fetch() {
-	: # Handled in pre_fetch
-}
-
-do_extract() {
-	: # Already extracted by git clone
-}
+lib32disabled=yes
 
 pre_configure() {
-	NOCONFIGURE=1 ./autogen.sh
+        autoreconf -fi
 }
 
 post_install() {
-	vlicense COPYING
-	# Install xsessions desktop file
-	vmkdir usr/share/xsessions
-	vinstall ${FILESDIR}/moksha.desktop 644 usr/share/xsessions
-}
-
-moksha-profiles_package() {
-	short_desc="Default Moksha desktop profiles (Bodhi Linux defaults)"
-	depends="moksha>=${version}_${revision}"
-	noarch=yes
-	pre_fetch() {
-		git clone --depth=1 https://github.com/JeffHoogland/moksha-profiles.git ${wrksrc}
-	}
-	distfiles=""
-	skip_extraction=yes
-	do_fetch() { :; }
-	do_extract() { :; }
-	pkg_install() {
-		vmkdir usr/share/enlightenment/data/config
-		vcopy "bodhi" usr/share/enlightenment/data/config/
-	}
+        vlicense COPYING
 }
