@@ -14,4 +14,5 @@ wrksrc=gtk-nocsd
 hostmakedepends="pkg-config make"
 makedepends="libadwaita-devel"
 depends="libadwaita"
+make_use_env=yes
 make_install_args="PREFIX=/usr LIBDIR=/usr/lib NOOPT=1 NODOC=1"
