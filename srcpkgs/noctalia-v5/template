@@ -2,7 +2,6 @@
 pkgname=noctalia-v5
 version=5.0.0
 revision=1
-archs="x86_64"
 build_style=meson
 hostmakedepends="just meson ninja pkg-config"
 makedepends="sdbus-c++-devel cmake wayland-devel wayland-protocols freetype-devel fontconfig-devel cairo-devel pango-devel librsvg-devel libxkbcommon-devel polkit-devel pipewire-devel wireplumber-devel libcurl-devel libqalculate-devel pam-devel libepoxy-devel"
@@ -14,7 +13,7 @@ homepage="https://github.com/noctalia-dev/noctalia-shell"
 changelog="https://github.com/noctalia-dev/${pkgname}/releases/tag/v${version}"
 distfiles="https://github.com/noctalia-dev/${pkgname}/releases/download/v${version}-beta2/noctalia-v${version}-beta2.tar.gz"
 checksum=bdd8600d15689439edc1c7c3c3167993b7d92fbb92ba283eb522511194c0514a
-CXXFLAGS+=" -std=c++23
+
 
 post_install() {
 	vlicense LICENSE
