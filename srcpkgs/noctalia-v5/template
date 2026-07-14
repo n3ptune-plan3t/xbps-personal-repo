@@ -1,4 +1,5 @@
 # Template file for 'noctalia-shell'
+_commit=8f765408417d211ec37396f35baeb812b90ed99f
 pkgname=noctalia-v5
 version=5.0.0
 revision=1
@@ -10,10 +11,11 @@ short_desc="Sleek and minimal desktop shell"
 maintainer="you <you@you.com>"
 license="MIT"
 homepage="https://github.com/noctalia-dev/noctalia-shell"
-changelog="https://github.com/noctalia-dev/${pkgname}/releases/tag/v${version}"
-distfiles="https://github.com/noctalia-dev/${pkgname}/releases/download/v${version}-beta2/noctalia-v${version}-beta2.tar.gz"
-checksum=bdd8600d15689439edc1c7c3c3167993b7d92fbb92ba283eb522511194c0514a
+changelog="https://github.com/noctalia-dev/noctalia-shell/releases/tag/v${version}"
+distfiles="https://github.com/noctalia-dev/noctalia-shell/archive/${_commit}.tar.gz"
+checksum=
 
+wrksrc="noctalia-shell-${_commit}"
 
 post_install() {
 	vlicense LICENSE
