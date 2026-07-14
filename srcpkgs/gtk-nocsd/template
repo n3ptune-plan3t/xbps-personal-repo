@@ -1,0 +1,17 @@
+# Template file for 'gtk-nocsd'
+_commit=9069544403754c22257d661b02c49602bd00a58f
+pkgname=gtk-nocsd
+version=0.0.20260714
+revision=1
+build_style=gnu-makefile
+short_desc="LD_PRELOAD library to disable CSD in GTK3/4 apps"
+maintainer="MorsMortium <https://codeberg.org/MorsMortium>"
+license="GPL-3.0-or-later"
+homepage="https://codeberg.org/MorsMortium/GTK-NoCSD"
+distfiles="https://codeberg.org/MorsMortium/GTK-NoCSD/archive/${_commit}.tar.gz"
+checksum=75ab09ce007427e598f196315c36ceff98499fa38599d06d557b9b578f5f8186
+wrksrc=gtk-nocsd
+hostmakedepends="pkg-config make"
+makedepends="libadwaita-devel"
+depends="libadwaita"
+make_install_args="PREFIX=/usr LIBDIR=/usr/lib NOOPT=1 NODOC=1"
