@@ -21,6 +21,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Allow unprivileged user namespaces (Ubuntu 24.04 AppArmor restriction)
+        run: echo 0 > /proc/sys/kernel/apparmor_restrict_unprivileged_userns || true
+
       - name: Build package
         run: sh build.sh
         env:
