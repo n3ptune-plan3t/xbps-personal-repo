@@ -97,9 +97,17 @@ XBPS_CXXFLAGS+=" -march=znver1 -mtune=znver1"
 EOF
 
 rm -rf "/home/builder/void-packages/srcpkgs/$PKG"
-cp -r "/repo/srcpkgs/$PKG" "/home/builder/void-packages/srcpkgs/$PKG"
+cp -r "srcpkgs/$PKG" "/home/builder/void-packages/srcpkgs/$PKG"
 chown -R builder "/home/builder/void-packages/srcpkgs/$PKG"
 
+# Also copy any subpackage symlink dirs that live alongside the main
+# package in our own repo (e.g. moksha-devel, moksha-menu) — xbps-src
+# needs a physical srcpkgs/<subpkg>/template symlink for each one, a
+# _package() function in the parent template alone isn't enough.
+for sub in "srcpkgs/${PKG}-"*; do
+  [ -d "$sub" ] || continue
+  name=$(basename "$sub")
+  
 cd /home/builder/void-packages
 
 su builder -c './xbps-src binary-bootstrap'
