@@ -14,7 +14,7 @@ short_desc="Enlightenment (E17) fork used by Bodhi Linux"
 maintainer="wn <your@email.here>"
 license="BSD-2-Clause"
 homepage="https://github.com/JeffHoogland/moksha"
-distfiles="https://github.com/JeffHoogland/moksha/archive/${_commit}.tar.gz
+distfiles="https://github.com/JeffHoogland/moksha/archive/${_commit}.tar.gz"
 
 checksum="f1f4b4972b5bee61a0d578bf4393e4b27ede18eb7dd2c1ed585551c87c6fc557"
 lib32disabled=yes
