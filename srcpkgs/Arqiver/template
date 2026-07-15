@@ -1,0 +1,17 @@
+# Template file for 'Arqiver'
+pkgname=Arqiver
+version=1.0.2
+revision=1
+build_style=cmake
+hostmakedepends="cmake qt6-base-devel qt6-svg-devel qt6-tools-devel"
+depends="bsdtar gzip p7zip"
+short_desc="Simple and lightweight Qt archive manager"
+maintainer="Your Name <your@email.com>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/tsujan/Arqiver"
+distfiles="https://github.com/tsujan/Arqiver/archive/refs/tags/V${version}.tar.gz"
+checksum=
+
+post_install() {
+	vlicense COPYING
+}
