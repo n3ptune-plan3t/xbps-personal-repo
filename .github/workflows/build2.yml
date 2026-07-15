@@ -1,4 +1,4 @@
-name: Build Void package like alpine
+name: Build Void package
 
 on:
   workflow_dispatch:
@@ -6,37 +6,64 @@ on:
       package:
         description: 'Package name to build (must match srcpkgs/<name>/template)'
         required: true
-      libc:
-        description: 'C library variant'
-        required: true
-        default: 'glibc'
-        type: choice
-        options:
-          - glibc
-          - musl
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/void-linux/void-glibc-full:latest
+      options: --platform linux/amd64 --privileged
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Allow unprivileged user namespaces (Ubuntu 24.04 AppArmor restriction)
-        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: Build package
+        run: sh build.sh
+        env:
+          PKG: ${{ inputs.package }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
 
-      - name: Build package in Void container
+      - name: Determine release tag from built package
+        id: meta
         run: |
-          docker run --rm --privileged \
-            -e PKG="${{ github.event.inputs.package }}" \
-            -v "${{ github.workspace }}:/repo" \
-            -w /repo \
-            "ghcr.io/void-linux/void-${{ github.event.inputs.libc }}-full:latest" \
-            sh /repo/build.sh
+          f=$(ls out/*.xbps | awk '{ print length, $0 }' | sort -n | head -n1 | cut -d' ' -f2-)
+          echo "tag=$(basename "$f" .xbps)" >> "$GITHUB_OUTPUT"
 
-      - name: Upload built package
+      - name: Create versioned release (history)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          files: out/*.xbps
+
+      - name: Remove stale versions of this package from the rolling repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for f in out/*.xbps; do
+            base=$(basename "$f")
+            pkg=$(echo "$base" | sed -E 's/-[^-]+_[0-9]+\.x86_64\.xbps$//')
+            gh release view repo-glibc --json assets --jq '.assets[].name' 2>/dev/null \
+              | grep "^${pkg}-" \
+              | xargs -r -I{} gh release delete-asset repo-glibc {} --yes || true
+          done
+
+      - name: Publish rolling repo release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: repo-glibc
+          name: "Personal repo snapshot (glibc)"
+          files: |
+            merged/*.xbps
+            merged/x86_64-repodata
+
+      - name: Upload built package (workflow artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: xbps-${{ github.event.inputs.package }}-${{ github.event.inputs.libc }}
+          name: xbps-${{ inputs.package }}
           path: out/
           if-no-files-found: error
