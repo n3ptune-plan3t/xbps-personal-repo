@@ -1,6 +1,6 @@
 # Template file for 'moksha'
 _commit=b11ceca00c556a9b6b5f1211cd0f5165d3a3b4b8
-pkgname=moksha2
+pkgname=moksha
 version=0.4.2
 revision=1
 build_style=gnu-configure
