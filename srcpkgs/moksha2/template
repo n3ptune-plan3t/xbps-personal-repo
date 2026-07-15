@@ -47,4 +47,3 @@ moksha-devel_package() {
 		vmove usr/lib/pkgconfig
 	}
 }
-}
