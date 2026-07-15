@@ -1,6 +1,0 @@
-[Desktop Entry]
-Name=Moksha
-Comment=This session logs you into Moksha
-Exec=/usr/bin/enlightenment_start
-TryExec=/usr/bin/enlightenment_start
-Type=Application
