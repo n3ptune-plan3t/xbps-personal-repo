@@ -5,10 +5,10 @@ version=0.1.0
 revision=1
 build_style=gnu-configure
 configure_args="--sysconfdir=/etc"
-hostmakedepends="autoconf automake libtool intltool gettext"
+hostmakedepends="autoconf automake libtool intltool gettext glib-devel"
 depends="moksha>=0.4.2"
 short_desc="Freedesktop.org menu specification files for Moksha"
-maintainer="wn <your@email.here>"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
 license="LGPL-2.1-only"
 homepage="http://mokshadesktop.org"
 distfiles="https://github.com/BodhiDev/Moksha-menu/archive/${_commit}.tar.gz"
