@@ -1,22 +1,27 @@
-# Template file for 'noctalia-shell'
-_commit=3f45cb05558605a69ac15d84e5f554a5a25dd3e0
+# Template file for 'noctalia'
+_commit=b86e4a0964744915ed2970d28fc86580b6332696
 pkgname=noctalia-v5
 version=5.0.0
 revision=1
 build_style=meson
-hostmakedepends="just ninja pkg-config cmake"
-makedepends="sdbus-c++-devel wayland-devel wayland-protocols freetype-devel fontconfig-devel cairo-devel pango-devel librsvg-devel libxkbcommon-devel polkit-devel pipewire-devel wireplumber-devel libcurl-devel libqalculate-devel pam-devel libepoxy-devel libmd4c-devel json-c++ tomlplusplus-devel"
-depends="ImageMagick brightnessctl ffmpeg qt6-multimedia cliphist cava wlsunset power-profiles-daemon ddcutil"
-short_desc="Sleek and minimal desktop shell"
-maintainer="n3ptune-plan3t <n3ptune@plan3t>"
+configure_args="-Dtests=disabled -Djemalloc=disabled -Dnative_optimizations=false"
+hostmakedepends="pkg-config"
+makedepends="cairo-devel pango-devel harfbuzz-devel freetype-devel
+ fontconfig-devel librsvg-devel libxkbcommon-devel glib-devel
+ polkit-devel pipewire-devel wireplumber-devel libcurl-devel
+ libqalculate-devel libxml2-devel libmd4c-devel json-c++
+ tomlplusplus-devel pam-devel sdbus-c++-devel wayland-devel
+ wayland-protocols libwebp-devel"
+short_desc="Lightweight Wayland shell built directly on Wayland and OpenGL ES"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
 license="MIT"
-homepage="https://github.com/noctalia-dev/noctalia-shell"
-changelog="https://github.com/noctalia-dev/noctalia-shell/releases/tag/v${version}"
-distfiles="https://github.com/noctalia-dev/noctalia-shell/archive/${_commit}.tar.gz"
-checksum=
+homepage="https://github.com/noctalia-dev/noctalia"
+distfiles="https://github.com/noctalia-dev/noctalia/archive/${_commit}.tar.gz"
+checksum=0b50ba8b2e7a7688d629e317962fc817a22ae0085afd362767992f9c10a8129c
 
-wrksrc="noctalia-shell-${_commit}"
+wrksrc="noctalia-${_commit}"
 
 post_install() {
 	vlicense LICENSE
+	vdoc README.md
 }
