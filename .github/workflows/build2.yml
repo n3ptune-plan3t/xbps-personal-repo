@@ -24,6 +24,18 @@ jobs:
       - name: Allow unprivileged user namespaces (Ubuntu 24.04 AppArmor restriction)
         run: echo 0 > /proc/sys/kernel/apparmor_restrict_unprivileged_userns || true
 
+      - name: Compute cache week
+        id: cachekey
+        run: echo "week=$(date +%Y-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache void-packages checkout + masterdir
+        uses: actions/cache@v4
+        with:
+          path: /home/builder/void-packages
+          key: void-packages-${{ steps.cachekey.outputs.week }}
+          restore-keys: |
+            void-packages-
+
       - name: Build package
         run: sh build.sh
         env:
