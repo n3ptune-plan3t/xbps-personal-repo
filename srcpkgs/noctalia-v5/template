@@ -5,13 +5,13 @@ version=5.0.0
 revision=1
 build_style=meson
 configure_args="-Dtests=disabled -Djemalloc=disabled -Dnative_optimizations=false"
-hostmakedepends="pkg-config"
+hostmakedepends="pkg-config cmake"
 makedepends="cairo-devel pango-devel harfbuzz-devel freetype-devel
  fontconfig-devel librsvg-devel libxkbcommon-devel glib-devel
  polkit-devel pipewire-devel wireplumber-devel libcurl-devel
  libqalculate-devel libxml2-devel libmd4c-devel json-c++
  tomlplusplus-devel pam-devel sdbus-c++-devel wayland-devel
- wayland-protocols libwebp-devel"
+ wayland-protocols libwebp-devel libepoxy-devel"
 short_desc="Lightweight Wayland shell built directly on Wayland and OpenGL ES"
 maintainer="n3ptune-planet <n3ptune@plan3t>"
 license="MIT"
