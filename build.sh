@@ -94,14 +94,29 @@ fi
 su builder -c "xgensum -i srcpkgs/$PKG/template"
 su builder -c "./xbps-src pkg $PKG"
 
-# Physically remove superseded package files. xbps-rindex -a only
-# updates which version the *index* points to — it doesn't delete the
-# old file. Without this, hostdir/binpkgs (and therefore merged/)
-# silently accumulates every version of every package we've ever built
-# or seeded, and all of them get uploaded together.
-su builder -c 'xbps-rindex -c hostdir/binpkgs'
+# Manually de-duplicate hostdir/binpkgs, keeping only the newest version
+# of each package. xbps-rindex -c was supposed to handle this but isn't
+# reliably removing superseded files, so doing it explicitly here instead
+# — this also lets us see exactly what gets removed in the log.
+echo "==> De-duplicating hostdir/binpkgs"
+(
+  cd hostdir/binpkgs
+  ls *.x86_64.xbps 2>/dev/null \
+    | sed -E 's/-[^-]+_[0-9]+\.x86_64\.xbps$//' \
+    | sort -u \
+    | while read -r base; do
+        matches=$(ls -- "$base"-*.x86_64.xbps 2>/dev/null | grep -E "^${base}-[0-9]")
+        newest=$(printf '%s\n' "$matches" | sort -V | tail -n1)
+        printf '%s\n' "$matches" | while read -r f; do
+          [ "$f" = "$newest" ] && continue
+          echo "==> Removing stale $f (superseded by $newest)"
+          rm -f -- "$f"
+        done
+      done
+)
 
 mkdir -p "$OLDPWD/out"
+find hostdir/binpkgs -maxdepth 1 -name "${PKG}-*.xbps" -exec cp {} "$OLDPWD/out/" \;
 find hostdir/binpkgs -maxdepth 1 -name "${PKG}-*.xbps" -exec cp {} "$OLDPWD/out/" \;
 
 mkdir -p "$OLDPWD/merged"
