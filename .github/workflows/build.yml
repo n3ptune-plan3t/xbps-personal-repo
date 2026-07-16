@@ -1,0 +1,96 @@
+name: Build Void package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Package name to build (must match srcpkgs/<name>/template)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/void-linux/void-glibc-full:latest
+      options: --platform linux/amd64 --privileged
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Allow unprivileged user namespaces (Ubuntu 24.04 AppArmor restriction)
+        run: echo 0 > /proc/sys/kernel/apparmor_restrict_unprivileged_userns || true
+
+      - name: Compute cache week
+        id: cachekey
+        run: echo "week=$(date +%Y-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache xbps package downloads
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/xbps
+          key: xbps-pkgcache-${{ steps.cachekey.outputs.week }}
+          restore-keys: |
+            xbps-pkgcache-
+
+      - name: Cache void-packages checkout + masterdir
+        uses: actions/cache@v4
+        with:
+          path: /home/builder/void-packages
+          key: void-packages-${{ steps.cachekey.outputs.week }}
+          restore-keys: |
+            void-packages-
+
+      - name: Build package
+        run: sh build.sh
+        env:
+          PKG: ${{ inputs.package }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Determine release tag from built package
+        id: meta
+        run: |
+          f=$(ls out/*.xbps | awk '{ print length, $0 }' | sort -n | head -n1 | cut -d' ' -f2-)
+          echo "tag=$(basename "$f" .xbps)" >> "$GITHUB_OUTPUT"
+
+      - name: Create versioned release (history)
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          files: out/*.xbps
+
+      - name: Remove stale versions from the rolling repo
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for f in merged/*.xbps; do
+            base=$(basename "$f")
+            pkg=$(echo "$base" | sed -E 's/-[^-]+_[0-9]+\.x86_64\.xbps$//')
+            gh release view repo-glibc --json assets --jq '.assets[].name' 2>/dev/null \
+              | grep "^${pkg}-" \
+              | xargs -r -I{} gh release delete-asset repo-glibc {} --yes || true
+          done
+
+      - name: Publish rolling repo release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          tag_name: repo-glibc
+          name: "Personal repo snapshot (glibc)"
+          files: |
+            merged/*.xbps
+            merged/x86_64-repodata
+
+      - name: Upload built package (workflow artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: xbps-${{ inputs.package }}
+          path: out/
+          if-no-files-found: error
