@@ -2,10 +2,10 @@
 _commit=6e2747943d2189c9e6954b8266b0074a2eb2a2bc
 pkgname=moksha-theme-dimensions
 version=0.0.0.20260105
-revision=1
+revision=2
 depends="moksha hicolor-icon-theme papirus-icon-theme"
 short_desc="Dimensions theme for the Moksha desktop"
-maintainer="wn <your@email.here>"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
 license="BSD-2-Clause"
 homepage="https://github.com/thewaiter/MokshaDimensions"
 distfiles="https://github.com/thewaiter/MokshaDimensions/archive/${_commit}.tar.gz"
@@ -20,11 +20,15 @@ post_patch() {
 }
 
 do_install() {
-	vinstall MokshaDimensions.edj 644 \
-		usr/share/enlightenment/data/themes
+	vinstall MokshaDimensions.edj 644 usr/share/enlightenment/data/themes
+
 	vinstall term/Dimensions.edj 644 usr/share/terminology/themes
 	vinstall term/Dimensions.eet 644 usr/share/terminology/colorschemes
 	vinstall term/DimensionsWhite.eet 644 usr/share/terminology/colorschemes
+
 	vmkdir usr/share/icons/MokshaDimensions-Icons
 	vcopy "MokshaDimensions-Icons/*" usr/share/icons/MokshaDimensions-Icons
+
+	vmkdir usr/share/themes/Vertex-Dark
+	vcopy "Vertex-Dark/*" usr/share/themes/Vertex-Dark
 }
