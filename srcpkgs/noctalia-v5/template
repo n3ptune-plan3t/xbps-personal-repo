@@ -1,5 +1,5 @@
 # Template file for 'noctalia-shell'
-_commit=8f765408417d211ec37396f35baeb812b90ed99f
+_commit=3f45cb05558605a69ac15d84e5f554a5a25dd3e0
 pkgname=noctalia-v5
 version=5.0.0
 revision=1
@@ -8,7 +8,7 @@ hostmakedepends="just meson ninja pkg-config"
 makedepends="sdbus-c++-devel cmake wayland-devel wayland-protocols freetype-devel fontconfig-devel cairo-devel pango-devel librsvg-devel libxkbcommon-devel polkit-devel pipewire-devel wireplumber-devel libcurl-devel libqalculate-devel pam-devel libepoxy-devel"
 depends="ImageMagick brightnessctl ffmpeg qt6-multimedia cliphist cava wlsunset power-profiles-daemon ddcutil"
 short_desc="Sleek and minimal desktop shell"
-maintainer="you <you@you.com>"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
 license="MIT"
 homepage="https://github.com/noctalia-dev/noctalia-shell"
 changelog="https://github.com/noctalia-dev/noctalia-shell/releases/tag/v${version}"
