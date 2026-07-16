@@ -94,6 +94,13 @@ fi
 su builder -c "xgensum -i srcpkgs/$PKG/template"
 su builder -c "./xbps-src pkg $PKG"
 
+# Physically remove superseded package files. xbps-rindex -a only
+# updates which version the *index* points to — it doesn't delete the
+# old file. Without this, hostdir/binpkgs (and therefore merged/)
+# silently accumulates every version of every package we've ever built
+# or seeded, and all of them get uploaded together.
+su builder -c 'xbps-rindex -c hostdir/binpkgs'
+
 mkdir -p "$OLDPWD/out"
 find hostdir/binpkgs -maxdepth 1 -name "${PKG}-*.xbps" -exec cp {} "$OLDPWD/out/" \;
 
