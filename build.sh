@@ -53,13 +53,32 @@ rm -rf "/home/builder/void-packages/srcpkgs/$PKG"
 cp -r "srcpkgs/$PKG" "/home/builder/void-packages/srcpkgs/$PKG"
 chown -R builder "/home/builder/void-packages/srcpkgs/$PKG"
 
-for sub in "srcpkgs/${PKG}-"*; do
-  [ -d "$sub" ] || continue
-  name=$(basename "$sub")
-  rm -rf "/home/builder/void-packages/srcpkgs/$name"
-  cp -r "$sub" "/home/builder/void-packages/srcpkgs/$name"
-  chown -R builder "/home/builder/void-packages/srcpkgs/$name"
-done
+# Auto-derive subpackage symlink directories from the template itself,
+# rather than relying on a real symlink surviving git/GitHub/checkout/cp.
+# Any name_package() function in the template means xbps-src expects
+# srcpkgs/<name>/template to exist as a symlink back to the parent.
+grep -oE '^[A-Za-z0-9._+-]+_package\(\)' "/home/builder/void-packages/srcpkgs/$PKG/template" \
+  | sed -E 's/_package\(\)$//' \
+  | while read -r subpkg; do
+      [ "$subpkg" = "$PKG" ] && continue
+      target="/home/builder/void-packages/srcpkgs/$subpkg"
+
+      # Preserve any files you intentionally keep in the subpkg's own
+      # directory (rare, but possible); we only guarantee the template
+      # symlink, since that's the part that keeps failing to survive
+      # the round trip.
+      if [ -d "srcpkgs/$subpkg" ]; then
+        rm -rf "$target"
+        cp -r "srcpkgs/$subpkg" "$target"
+      else
+        mkdir -p "$target"
+      fi
+
+      rm -f "$target/template"
+      ln -s "../$PKG/template" "$target/template"
+      chown -R builder "$target"
+      echo "==> Linked subpackage $subpkg -> $PKG"
+    done
 
 cd /home/builder/void-packages
 
