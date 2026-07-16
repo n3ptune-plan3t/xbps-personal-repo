@@ -28,6 +28,14 @@ jobs:
         id: cachekey
         run: echo "week=$(date +%Y-W%V)" >> "$GITHUB_OUTPUT"
 
+      - name: Cache xbps package downloads
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/xbps
+          key: xbps-pkgcache-${{ steps.cachekey.outputs.week }}
+          restore-keys: |
+            xbps-pkgcache-
+
       - name: Cache void-packages checkout + masterdir
         uses: actions/cache@v4
         with:
