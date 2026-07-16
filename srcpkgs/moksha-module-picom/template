@@ -1,0 +1,20 @@
+# Template file for 'moksha-module-picom'
+_commit=343c00ef868dadf2e5dd26e3ec0caa541445583b
+pkgname=moksha-module-picom
+version=0.1
+revision=1
+build_style=meson
+hostmakedepends="meson ninja efl"
+makedepends="moksha-devel picom"
+depends="moksha picom"
+short_desc="Picom compositing module for the Moksha desktop"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
+license="GPL-2.0-or-later"
+homepage="https://github.com/thewaiter/PicomMod"
+distfiles="https://github.com/thewaiter/PicomMod/archive/${_commit}.zip"
+checksum=
+wrksrc="PicomMod-${_commit}"
+
+post_install() {
+	vlicense COPYING
+}
