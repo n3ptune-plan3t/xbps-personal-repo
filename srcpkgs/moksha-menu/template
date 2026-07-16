@@ -16,10 +16,6 @@ checksum=""
 
 wrksrc="Moksha-menu-${_commit}"
 
-pre_configure() {
-	autoreconf -fi
-}
-
 post_install() {
 	vlicense COPYING
 }
