@@ -1,12 +1,11 @@
 # Template file for 'moksha-menu'
 _commit=9b6f18badb8c4c88225a429c405e5194d8f5b56c
 pkgname=moksha-menu
-version=0.1.0
+version=1.0
 revision=1
 build_style=gnu-configure
-configure_args="--sysconfdir=/etc"
-hostmakedepends="autoconf automake libtool intltool gettext glib-devel"
-depends="moksha>=0.4.2"
+hostmakedepends="autoconf automake libtool intltool gettext"
+depends="moksha"
 short_desc="Freedesktop.org menu specification files for Moksha"
 maintainer="n3ptune-plan3t <n3ptune@plan3t>"
 license="LGPL-2.1-only"
@@ -15,6 +14,10 @@ distfiles="https://github.com/BodhiDev/Moksha-menu/archive/${_commit}.tar.gz"
 checksum=""
 
 wrksrc="Moksha-menu-${_commit}"
+
+pre_configure() {
+	./autogen.sh
+}
 
 post_install() {
 	vlicense COPYING
