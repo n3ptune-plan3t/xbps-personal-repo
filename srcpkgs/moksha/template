@@ -25,13 +25,13 @@ pre_configure() {
 }
 
 post_install() {
-	sed -i 's/^action:.*halt.*/action: halt /sbin/shutdown/g' \
+	sed -i 's|^action:.*halt.*|action: halt /sbin/shutdown|g' \
 		${DESTDIR}/etc/enlightenment/sysactions.conf
-	sed -i 's/^action:.*reboot.*/action: reboot /sbin/reboot/g' \
+	sed -i 's|^action:.*reboot.*|action: reboot /sbin/reboot|g' \
 		${DESTDIR}/etc/enlightenment/sysactions.conf
-	sed -i 's/^action:.*suspend.*/action: suspend zzz/g' \
+	sed -i 's|^action:.*suspend.*|action: suspend zzz|g' \
 		${DESTDIR}/etc/enlightenment/sysactions.conf
-	sed -i 's/^action:.*hibernate.*/action: hibernate ZZZ/g' \
+	sed -i 's|^action:.*hibernate.*|action: hibernate ZZZ|g' \
 		${DESTDIR}/etc/enlightenment/sysactions.conf
 
 	vlicense COPYING
