@@ -51,18 +51,19 @@ jobs:
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
 
-      - name: Determine release tag from built package
-        id: meta
+      - name: Delete previous release for this package (if any)
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          f=$(ls out/*.xbps | awk '{ print length, $0 }' | sort -n | head -n1 | cut -d' ' -f2-)
-          echo "tag=$(basename "$f" .xbps)" >> "$GITHUB_OUTPUT"
+          gh release delete "${{ inputs.package }}" --yes --cleanup-tag \
+            --repo "${{ github.repository }}" || true
 
-      - name: Create versioned release (history)
+      - name: Publish per-package release
         uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          tag_name: ${{ steps.meta.outputs.tag }}
+          tag_name: ${{ inputs.package }}
           files: out/*.xbps
 
       - name: Remove stale versions from the rolling repo
