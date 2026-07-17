@@ -13,6 +13,7 @@ homepage="https://www.wps.com/"
 changelog="https://www.wps.com/whatsnew/linux/"
 checksum="5b99b9762dbfeebf2a31d80fdfa0e023612f19bd9a428fbbbaf5c89e531162b6"
 allow_unknown_shlibs=yes
+noshlibprovides=yes
 nodebug=yes
 nostrip=yes
 conflicts="EternalTerminal>=0"
