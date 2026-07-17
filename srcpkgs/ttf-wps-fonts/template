@@ -16,6 +16,7 @@ source="https://github.com/dv-anomaly/ttf-wps-fonts.git/archive/${_commit}.zip"
 checksum=
 nodebug=yes
 nostrip=yes
+wrksrc="${pkgname}_${_commit}"
 
 do_install() {
 	cp -R ${wrksrc}/* ${DESTDIR}
