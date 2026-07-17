@@ -1,10 +1,10 @@
 # Template file for 'wps-office'
+_commit=8c980c24289cb08e03f72915970ce1bd6767e45a
 pkgname=wps-office
 version=11.1.0.11733
 revision=1
 short_desc="Linux office suite with similar appearance to MS Office"
 maintainer="mobinmob <mobinmob@disroot.org>"
-hostmakedepends="git"
 # The old Kingsoft WPS Community License has disappeared from the
 # site. There is an EULA in the archive which is instaled as license
 # and a non-downloadable EULA which is accesible from inside the program:
@@ -12,8 +12,7 @@ hostmakedepends="git"
 license="custom:EULA"
 homepage="https://www.wps.com/"
 changelog="https://www.wps.com/whatsnew/linux/"
-checksum="5b99b9762dbfeebf2a31d80fdfa0e023612f19bd9a428fbbbaf5c89e531162b6
-          SKIP"
+checksum="5b99b9762dbfeebf2a31d80fdfa0e023612f19bd9a428fbbbaf5c89e531162b6"
 allow_unknown_shlibs=yes
 nodebug=yes
 nostrip=yes
@@ -24,7 +23,7 @@ _disturl=http://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/${vers
 _distTar="${pkgname}-${version}.XA-1.x86_64.rpm"
 
 distfiles="${_disturl}/${_distTar}
-            git clone --depth=1 https://github.com/dv-anomaly/ttf-wps-fonts.git"
+            https://github.com/dv-anomaly/ttf-wps-fonts.git/archive/${_commit}.zip"
 
 
 do_install() {
@@ -34,9 +33,9 @@ do_install() {
 post_install() {
 
 	# Clean up:
-  # Disable background services
-  chmod -x ${DESTDIR}/opt/kingsoft/wps-office/office6/wpsd
-  chmod -x ${DESTDIR}/opt/kingsoft/wps-office/office6/wpscloudsvr
+  	# Disable background services
+  	chmod -x ${DESTDIR}/opt/kingsoft/wps-office/office6/wpsd
+  	chmod -x ${DESTDIR}/opt/kingsoft/wps-office/office6/wpscloudsvr
 
 	# Delete everything under /etc. It contains cron, logrotate and autostart
 	# configuration for the update check and a seperate menu category for the
@@ -64,8 +63,8 @@ post_install() {
 	rm -f ${DESTDIR}/opt/kingsoft/wps-office/office6/libstdc++.so.6
 	rm -f ${DESTDIR}/opt/kingsoft/wps-office/office6/libstdc++.so.6.0.28
 
-  # Fonts
-  vmkdir /usr/share/fonts/wps-fonts
-  vcopy ${DESTDIR}/*.ttf /usr/share/fonts/wps-fonts
+  	# Fonts
+  	vmkdir /usr/share/fonts/wps-fonts
+  	vcopy ${DESTDIR}/*.ttf /usr/share/fonts/wps-fonts
 }
 
