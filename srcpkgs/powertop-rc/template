@@ -13,6 +13,9 @@ homepage="https://github.com/fenrus75/powertop"
 distfiles="https://github.com/fenrus75/powertop/archive/${_commit}.zip"
 checksum=
 
+conflicts="powertop"
+provides="powertop"
+
 wrksrc="powertop-${_commit}"
 
 LDFLAGS="-lpthread"
