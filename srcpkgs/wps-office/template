@@ -1,5 +1,4 @@
 # Template file for 'wps-office'
-_commit=8c980c24289cb08e03f72915970ce1bd6767e45a
 pkgname=wps-office
 version=11.1.0.11733
 revision=1
@@ -17,14 +16,11 @@ allow_unknown_shlibs=yes
 nodebug=yes
 nostrip=yes
 conflicts="EternalTerminal>=0"
-create_wrksrc=yes
 
 _disturl=http://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/${version##*.}
 _distTar="${pkgname}-${version}.XA-1.x86_64.rpm"
 
-distfiles="${_disturl}/${_distTar}
-            https://github.com/dv-anomaly/ttf-wps-fonts.git/archive/${_commit}.zip"
-
+distfiles="${_disturl}/${_distTar}"
 
 do_install() {
 	cp -R ${wrksrc}/* ${DESTDIR}
@@ -62,9 +58,4 @@ post_install() {
 	# stdlibc++
 	rm -f ${DESTDIR}/opt/kingsoft/wps-office/office6/libstdc++.so.6
 	rm -f ${DESTDIR}/opt/kingsoft/wps-office/office6/libstdc++.so.6.0.28
-
-  	# Fonts
-  	vmkdir /usr/share/fonts/wps-fonts
-  	vcopy ${DESTDIR}/*.ttf /usr/share/fonts/wps-fonts
 }
-
