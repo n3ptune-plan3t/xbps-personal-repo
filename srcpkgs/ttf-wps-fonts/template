@@ -1,0 +1,29 @@
+# Template file for 'wps-fonts'
+_commit=8c980c24289cb08e03f72915970ce1bd6767e45a
+pkgname=ttf-wps-fonts
+version=0.1
+revision=1
+short_desc="Linux office suite with similar appearance to MS Office - font files"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
+# The old Kingsoft WPS Community License has disappeared from the
+# site. There is an EULA in the archive which is instaled as license
+# and a non-downloadable EULA which is accesible from inside the program:
+# https://www.wps.com/eula?distsrc=2021help&lang=en_US&version=11.1.0.10920
+license="custom:EULA"
+homepage="https://www.wps.com/"
+changelog="https://www.wps.com/whatsnew/linux/"
+source="https://github.com/dv-anomaly/ttf-wps-fonts.git/archive/${_commit}.zip"
+checksum=
+nodebug=yes
+nostrip=yes
+
+do_install() {
+	cp -R ${wrksrc}/* ${DESTDIR}
+}
+
+post_install() {
+  rm -f *.sh
+  rm -f *.md
+  vmkdir /usr/share/fonts/wps-fonts
+  vcopy ${DESTDIR}/*.ttf /usr/share/fonts/wps-fonts
+}
