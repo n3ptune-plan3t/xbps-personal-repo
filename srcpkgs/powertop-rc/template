@@ -1,7 +1,7 @@
 # Template file for 'powertop'
 _commit=6aa7c4bd07c0ddd31200db590cd0dbe1cad1c37d
 pkgname=powertop-rc
-version=2.16-rc3
+version=2.16_rc3
 revision=1
 build_style=gnu-configure
 hostmakedepends="automake autoconf-archive gettext-devel libtool pkg-config"
