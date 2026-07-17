@@ -1,0 +1,26 @@
+# Template file for 'powertop'
+_commit=6aa7c4bd07c0ddd31200db590cd0dbe1cad1c37d
+pkgname=powertop-rc
+version=2.16-rc3
+revision=1
+build_style=gnu-configure
+hostmakedepends="automake autoconf-archive gettext-devel libtool pkg-config"
+makedepends="ncurses-devel pciutils-devel libnl3-devel"
+short_desc="Tool to diagnose issues with power consumption and power management"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
+license="GPL-2.0-only"
+homepage="https://github.com/fenrus75/powertop"
+distfiles="https://github.com/fenrus75/powertop/archive/${_commit}.zip"
+checksum=
+
+wrksrc="powertop-${_commit}"
+
+LDFLAGS="-lpthread"
+
+pre_configure() {
+	./autogen.sh
+}
+
+post_install() {
+  vlicense COPYING
+}
