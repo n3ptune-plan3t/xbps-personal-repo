@@ -12,19 +12,16 @@ maintainer="n3ptune-plan3t <n3ptune@plan3t>"
 license="custom:EULA"
 homepage="https://www.wps.com/"
 changelog="https://www.wps.com/whatsnew/linux/"
-source="https://github.com/dv-anomaly/ttf-wps-fonts.git/archive/${_commit}.zip"
+distfiles="https://github.com/dv-anomaly/ttf-wps-fonts/archive/${_commit}.zip"
 checksum=
 nodebug=yes
 nostrip=yes
 wrksrc="${pkgname}_${_commit}"
 
-do_install() {
-	cp -R ${wrksrc}/* ${DESTDIR}
-}
 
-post_install() {
-  rm -f *.sh
-  rm -f *.md
-  vmkdir /usr/share/fonts/wps-fonts
-  vcopy ${DESTDIR}/*.ttf /usr/share/fonts/wps-fonts
+do_install() {
+	rm *.sh
+	rm *.md
+	vmkdir /usr/share/fonts/wps-fonts
+	vcopy "${wrksrc}"/*.ttf /usr/share/fonts/wps-fonts
 }
