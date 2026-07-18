@@ -1,0 +1,55 @@
+# Template file for 'mokshagreen'
+# Theme suite for Moksha: the edje shell theme (this base package), plus
+# a matching GTK theme and icon theme as subpackages. All three
+# directory names below ("MokshaGreen") are load-bearing - Moksha's
+# default.edc, the GTK theme's index.theme, and the icon theme's
+# index.theme all cross-reference each other by that exact string, so
+# don't rename the install directories without updating all three.
+_commit=1aea3216d0e4e26de2ba49c6cfa22627f4692f58
+pkgname=moksha-theme-green
+version=0.1
+revision=1
+depends="moksha hicolor-icon-theme papirus-icon-theme"
+short_desc="Green edje shell theme for Moksha"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
+# Top-level LICENSE is the same MIT-with-acknowledgment Enlightenment/EFL
+# license text used across the wider Moksha ecosystem; mokshagreen-icons
+# is separately GPL-3.0 (derived from Papirus/GNOME/Mint-X/Ubuntu-Mono-
+# Dark/Humanity icon themes - see MokshaGreen-Icons/copyright upstream).
+license="MIT, GPL-3.0-only"
+homepage="https://github.com/thewaiter/MokshaGreen"
+distfiles="https://github.com/thewaiter/MokshaGreen/archive/${_commit}.tar.gz"
+checksum=6842d01163fd3ec1f3e1eb9a95a811fe3934c382cca4dd5375339ae7e521f290
+
+wrksrc="MokshaGreen-${_commit}"
+
+do_build() {
+	cd MokshaGreen
+	edje_cc -id ./img -fd . default.edc -o ../MokshaGreen.edj
+}
+
+do_install() {
+	vmkdir usr/share/enlightenment/data/themes
+	install -Dm644 MokshaGreen.edj \
+		${DESTDIR}/usr/share/enlightenment/data/themes/MokshaGreen.edj
+
+	vmkdir usr/share/themes/MokshaGreen
+	cp -R MokshaGreen-GTK/. ${DESTDIR}/usr/share/themes/MokshaGreen/
+
+	vmkdir usr/share/icons/MokshaGreen
+  # Make it inherit Papirus-Dark
+  vsed -i MokshaGreen-Icons/index.theme \
+		-e 's/^Inherits=/Inherits=Papirus-Dark,/'
+
+	cp -R MokshaGreen-Icons/. ${DESTDIR}/usr/share/icons/MokshaGreen/
+	# copyright/LICENSE/index.theme ship as package files elsewhere;
+	# don't duplicate them inside the installed icon theme tree.
+	rm -f ${DESTDIR}/usr/share/icons/MokshaGreen/LICENSE
+	rm -f ${DESTDIR}/usr/share/icons/MokshaGreen/copyright
+
+}
+
+post_install() {
+	vlicense LICENSE
+	vdoc COPYING-PLAIN
+}
