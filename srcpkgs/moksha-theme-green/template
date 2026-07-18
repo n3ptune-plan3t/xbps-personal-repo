@@ -9,6 +9,7 @@ _commit=1aea3216d0e4e26de2ba49c6cfa22627f4692f58
 pkgname=moksha-theme-green
 version=0.1
 revision=1
+makedepends="efl-devel"
 depends="moksha hicolor-icon-theme papirus-icon-theme"
 short_desc="Green edje shell theme for Moksha"
 maintainer="n3ptune-plan3t <n3ptune@plan3t>"
