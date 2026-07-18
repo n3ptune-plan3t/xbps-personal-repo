@@ -1,0 +1,66 @@
+# Template file for 'forticlient-vpn'
+pkgname=forticlient-vpn
+version=7.4.3.5411
+revision=1
+archs="x86_64*"
+hostmakedepends="binutils"
+depends="alsa-lib at-spi2-core bash cairo dbus expat glib glibc gtk+
+ gtk+3 hicolor-icon-theme libcups libdrm libgcc libnotify libsecret
+ libX11 libxcb libXcomposite libXdamage libXext libXfixes libxkbcommon
+ libXrandr mesa nspr nss pango procps-ng util-linux zlib"
+short_desc="FortiClient VPN-only build from the official Fortinet package"
+maintainer="wn <your@email.here>"
+license="custom:LicenseRef-fortinet"
+homepage="https://www.fortinet.com/support/product-downloads"
+_distName="forticlient_vpn_${version}_amd64.deb"
+distfiles="https://filestore.fortinet.com/forticlient/downloads/${_distName}"
+checksum=d2c0366decbf0b907fbf0d9306b8ac0b705d2d9cb4eb7b946ae06ce5388d4e5a
+skip_extraction="${_distName}"
+nopie=yes
+nodebug=yes
+nostrip=yes
+allow_unknown_shlibs=yes
+conflicts="forticlient>=0"
+provides="fortivpn-${version}_${revision} FortiClient-${version}_${revision}"
+
+# Verified against the actual extracted binaries (readelf -d on every
+# ELF under opt/forticlient/): NO binary links against libsystemd.so.0.
+# The Arch PKGBUILD's "systemd-libs" dependency was for libudev.so.1
+# (bundled into that one Arch package alongside real libsystemd) - that
+# need is already covered by Void's base eudev. libuuid.so.1 is covered
+# by util-linux above. gtk+ (GTK2) turned out to be a REAL hard
+# dependency of one binary (the tray-icon helper), not the merely
+# optional "legacy" one the PKGBUILD's optdepends implied - fixed above.
+
+do_install() {
+	local _ar="${wrksrc}/${_distName}"
+	local _extract="${wrksrc}/extract"
+	mkdir -p "${_extract}"
+	cd "${_extract}"
+	ar x "${_ar}"
+
+	if [ -f data.tar.zst ]; then
+		bsdtar -xf data.tar.zst -C ${DESTDIR}
+	elif [ -f data.tar.xz ]; then
+		bsdtar -xf data.tar.xz -C ${DESTDIR}
+	else
+		msg_error "forticlient-vpn: no data.tar.{zst,xz} found in .deb\n"
+	fi
+
+	# Move systemd service from non-standard /lib to /usr/lib
+	if [ -f ${DESTDIR}/lib/systemd/system/forticlient.service ]; then
+		vmkdir usr/lib/systemd/system
+		mv ${DESTDIR}/lib/systemd/system/forticlient.service \
+			${DESTDIR}/usr/lib/systemd/system/forticlient.service
+	fi
+	rm -rf ${DESTDIR}/lib
+
+	# Runtime directory - intentionally empty at install time
+	vmkdir var/lib/forticlient
+
+	vlicense ${DESTDIR}/usr/share/doc/forticlient/copyright LICENSE
+
+	# Symlink to the fortivpn CLI
+	vmkdir usr/bin
+	ln -sf /opt/forticlient/fortivpn ${DESTDIR}/usr/bin/fortivpn
+}
