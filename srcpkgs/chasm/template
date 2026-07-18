@@ -100,7 +100,7 @@ do_install() {
 	# xbps-src subpackages move files out of the same shared DESTDIR.
 	install -Dm755 ${_bolt}/bolt ${DESTDIR}/usr/bin/bolt
 	install -Dm4755 ${_bolt}/bolt-auth ${DESTDIR}/usr/bin/bolt-auth
-	vlicense ${_bolt}/LICENSE LICENSE.bolt
+	vlicense ${_bolt}/UNLICENSE LICENSE.bolt
 }
 
 chasm-bare_package() {
