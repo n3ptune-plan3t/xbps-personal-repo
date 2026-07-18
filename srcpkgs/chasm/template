@@ -83,8 +83,11 @@ do_install() {
 	make -C ${_glass} PREFIX=/usr DESTDIR=${DESTDIR} install
 	make -C ${_tile} PREFIX=/usr DESTDIR=${DESTDIR} install
 	make -C ${_bits} PREFIX=/usr DESTDIR=${DESTDIR} install
-	make -C ${_glyph} PREFIX=/usr DESTDIR=${DESTDIR} install
 	make -C ${_spot} PREFIX=/usr DESTDIR=${DESTDIR} install
+
+	# glyph's Makefile has no "install" target upstream (only
+	# all/clean/smoke) - install the built binary by hand.
+	install -Dm755 ${_glyph}/glyph ${DESTDIR}/usr/bin/glyph
 
 	vlicense ${_bare}/LICENSE LICENSE.bare
 	vlicense ${_show}/LICENSE LICENSE.show
