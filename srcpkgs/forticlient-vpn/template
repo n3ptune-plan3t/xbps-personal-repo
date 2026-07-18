@@ -4,6 +4,7 @@ version=7.4.3.5411
 revision=1
 archs="x86_64*"
 hostmakedepends="binutils"
+makedepends="tar xz"
 depends="alsa-lib at-spi2-core bash cairo dbus expat glib glibc gtk+
  gtk+3 hicolor-icon-theme libcups libdrm libgcc libnotify libsecret
  libX11 libxcb libXcomposite libXdamage libXext libXfixes libxkbcommon
