@@ -1,0 +1,171 @@
+# Template file for 'chasm'
+# CHasm ("CHange to ASM") is not one program - it's a suite of ~8
+# independent, single-purpose x86_64-assembly tools (each its own
+# upstream repo under github.com/isene/) that together form a complete
+# X11 desktop. This template builds each with its own commit pin/
+# checksum and ships each as its own subpackage, since each is
+# genuinely independently useful (a shell, a pager, a terminal
+# emulator, a WM, a font rasterizer...), not just shelf plugins.
+#
+# The base "chasm" package installs nothing itself - it's a metapackage
+# that pulls in the core desktop (glass, tile, bare, show). chasm-bolt
+# (screen locker) is NOT pulled in by the metapackage - see the
+# warning above its _package() block below before enabling it.
+_bare_commit=ccd44966584675fc9342ffbe597f6f8314e11601
+_show_commit=e828c6e7babf8bb5f846c993353f645934415c38
+_glass_commit=f59221c1e868d13f204397401221e5d0bc65b484
+_tile_commit=952f82dac42f0198b6e25ac65142f8ea59e02ad7
+_bits_commit=4392aa2d14b412d6aa5a4214e308db2ae961244c
+_glyph_commit=866e41e884278a61aad5e745ba6dbe53fb410f25
+_bolt_commit=a77a189d3c21f84ff85a67e42e66b2fe2c8890c6
+_spot_commit=baf0089b05fafc1024e3cfa3b811daacf0a37770
+
+pkgname=chasm
+version=0.1
+revision=1
+archs="x86_64*"
+create_wrksrc=yes
+hostmakedepends="nasm"
+makedepends="libxcrypt-devel"
+depends="chasm-bare chasm-show chasm-glass chasm-tile"
+short_desc="Meta-package for the CHasm pure-assembly X11 desktop suite"
+maintainer="wn <your@email.here>"
+license="Unlicense"
+homepage="https://github.com/isene/chasm"
+distfiles="https://github.com/isene/bare/archive/${_bare_commit}.tar.gz>chasm-bare-${_bare_commit}.tar.gz
+ https://github.com/isene/show/archive/${_show_commit}.tar.gz>chasm-show-${_show_commit}.tar.gz
+ https://github.com/isene/glass/archive/${_glass_commit}.tar.gz>chasm-glass-${_glass_commit}.tar.gz
+ https://github.com/isene/tile/archive/${_tile_commit}.tar.gz>chasm-tile-${_tile_commit}.tar.gz
+ https://github.com/isene/chasm-bits/archive/${_bits_commit}.tar.gz>chasm-bits-${_bits_commit}.tar.gz
+ https://github.com/isene/glyph/archive/${_glyph_commit}.tar.gz>chasm-glyph-${_glyph_commit}.tar.gz
+ https://github.com/isene/bolt/archive/${_bolt_commit}.tar.gz>chasm-bolt-${_bolt_commit}.tar.gz
+ https://github.com/isene/spot/archive/${_spot_commit}.tar.gz>chasm-spot-${_spot_commit}.tar.gz"
+checksum="4f8f61a46413d91aef620e4b1f84c218833f5dc3f49ef2156f3a17fe7298611d
+ 31782e60c0d6d3e4fc9c846a42e1d4869fbd223e522433e249d1bfa71744e23f
+ 1eacf83a146db9e3b2e3ed49c7aa85ac691119f6ee280775ce09fad347d05776
+ da4ebc859368d743ed2b1da10e5e8fc2405b1080cf48f5fc3319d991d611318a
+ 2135bb63e2bad28f21bdf4d778c08ccacef4c27be48146d389020429f9ba8815
+ fba7c682766fadd9254bf45a57fc11462a6e43c9c2ed825726a57ccd51fa6ab0
+ 36853bf7a31edb88b85a461e998348b11f0752bd26c935e269e51f37acabaceb
+ 28c6cb900f9bdd3466bce1efc528a11dc2f7d493ef4c5b4bc8b9009d31aa224c"
+
+_bare=bare-${_bare_commit}
+_show=show-${_show_commit}
+_glass=glass-${_glass_commit}
+_tile=tile-${_tile_commit}
+_bits=chasm-bits-${_bits_commit}
+_glyph=glyph-${_glyph_commit}
+_bolt=bolt-${_bolt_commit}
+_spot=spot-${_spot_commit}
+
+do_build() {
+	make -C ${_bare} PREFIX=/usr
+	make -C ${_show} PREFIX=/usr
+	make -C ${_glass} PREFIX=/usr
+	make -C ${_tile} PREFIX=/usr
+	make -C ${_bits} PREFIX=/usr
+	make -C ${_glyph} PREFIX=/usr
+	make -C ${_spot} PREFIX=/usr
+	# bolt: build the locker + its suid-root C auth helper. NOT the
+	# systemd greeter (install-greeter target) - irrelevant on Void.
+	make -C ${_bolt} PREFIX=/usr bolt bolt-auth CC="${CC}" CFLAGS="${CFLAGS}"
+}
+
+do_install() {
+	make -C ${_bare} PREFIX=/usr DESTDIR=${DESTDIR} install
+	make -C ${_show} PREFIX=/usr DESTDIR=${DESTDIR} install
+	make -C ${_glass} PREFIX=/usr DESTDIR=${DESTDIR} install
+	make -C ${_tile} PREFIX=/usr DESTDIR=${DESTDIR} install
+	make -C ${_bits} PREFIX=/usr DESTDIR=${DESTDIR} install
+	make -C ${_glyph} PREFIX=/usr DESTDIR=${DESTDIR} install
+	make -C ${_spot} PREFIX=/usr DESTDIR=${DESTDIR} install
+
+	vlicense ${_bare}/LICENSE LICENSE.bare
+	vlicense ${_show}/LICENSE LICENSE.show
+	vlicense ${_glass}/LICENSE LICENSE.glass
+	vlicense ${_tile}/LICENSE LICENSE.tile
+	vlicense ${_glyph}/LICENSE LICENSE.glyph
+	vlicense ${_spot}/LICENSE LICENSE.spot
+
+	# bolt files installed here too, then moved into chasm-bolt below -
+	# xbps-src subpackages move files out of the same shared DESTDIR.
+	install -Dm755 ${_bolt}/bolt ${DESTDIR}/usr/bin/bolt
+	install -Dm4755 ${_bolt}/bolt-auth ${DESTDIR}/usr/bin/bolt-auth
+	vlicense ${_bolt}/LICENSE LICENSE.bolt
+}
+
+chasm-bare_package() {
+	short_desc="CHasm: interactive shell with line editing, history, completion (pure asm)"
+	pkg_install() {
+		vmove usr/bin/bare
+		vmove usr/bin/bare-open
+		vmove usr/share/man/man1/bare.1
+		vmove LICENSE.bare
+	}
+}
+
+chasm-show_package() {
+	short_desc="CHasm: pager/file viewer with syntax highlighting (pure asm)"
+	pkg_install() {
+		vmove usr/bin/show
+		vmove usr/share/man/man1/show.1
+		vmove LICENSE.show
+	}
+}
+
+chasm-glass_package() {
+	short_desc="CHasm: X11 terminal emulator, kitty graphics, XRender (pure asm)"
+	pkg_install() {
+		vmove usr/bin/glass
+		vmove LICENSE.glass
+	}
+}
+
+chasm-tile_package() {
+	short_desc="CHasm: tiling window manager + strip status bar (pure asm)"
+	pkg_install() {
+		vmove usr/bin/tile
+		vmove usr/bin/strip
+		vmove LICENSE.tile
+	}
+}
+
+chasm-bits_package() {
+	depends="chasm-tile>=0"
+	short_desc="CHasm: strip status-bar widgets - clock/cpu/mem/battery/etc (pure asm)"
+	pkg_install() {
+		vmove "usr/bin/bits-*"
+	}
+}
+
+chasm-glyph_package() {
+	short_desc="CHasm: standalone TrueType/OpenType glyph rasterizer (pure asm)"
+	pkg_install() {
+		vmove usr/bin/glyph
+		vmove LICENSE.glyph
+	}
+}
+
+chasm-spot_package() {
+	short_desc="CHasm: presenter spotlight/draw/highlight/OCR overlay (pure asm)"
+	pkg_install() {
+		vmove usr/bin/spot
+		vmove LICENSE.spot
+	}
+}
+
+# WARNING: bolt-auth is installed suid-root (mode 4755) by upstream's own
+# Makefile - it's a small C helper that calls crypt() against /etc/shadow
+# to authenticate screen-unlock attempts. This is NOT pulled in by the
+# base "chasm" metapackage's depends - it must be installed explicitly.
+# This is a young, single-maintainer, unaudited project; a suid-root
+# binary is real local-privilege-escalation surface if bolt-auth.c has
+# any bug. Read that file yourself before trusting it on a real system.
+chasm-bolt_package() {
+	short_desc="CHasm: screen locker with suid-root shadow auth helper (pure asm + C)"
+	pkg_install() {
+		vmove usr/bin/bolt
+		vmove usr/bin/bolt-auth
+		vmove LICENSE.bolt
+	}
+}
