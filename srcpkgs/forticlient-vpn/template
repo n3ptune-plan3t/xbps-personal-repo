@@ -34,34 +34,40 @@ provides="fortivpn-${version}_${revision} FortiClient-${version}_${revision}"
 # optional "legacy" one the PKGBUILD's optdepends implied - fixed above.
 
 do_install() {
-	local _ar="${wrksrc}/${_distName}"
+	local _ar="\( {wrksrc}/ \){_distName}"
 	local _extract="${wrksrc}/extract"
+
+	if [ ! -f "${_ar}" ]; then
+		msg_error "forticlient-vpn: ${_distName} not found!"
+	fi
+
 	mkdir -p "${_extract}"
 	cd "${_extract}"
-	ar x "${_ar}"
 
+	# Extract .deb
+	ar x "${_ar}" || msg_error "ar x failed on ${_ar}"
+
+	# Extract data.tar.*
 	if [ -f data.tar.zst ]; then
-		bsdtar -xf data.tar.zst -C ${DESTDIR}
+		bsdtar -xf data.tar.zst -C "${DESTDIR}"
 	elif [ -f data.tar.xz ]; then
-		bsdtar -xf data.tar.xz -C ${DESTDIR}
+		bsdtar -xf data.tar.xz -C "${DESTDIR}"
 	else
-		msg_error "forticlient-vpn: no data.tar.{zst,xz} found in .deb\n"
+		msg_error "forticlient-vpn: no data.tar.{zst,xz} found in .deb"
 	fi
 
-	# Move systemd service from non-standard /lib to /usr/lib
-	if [ -f ${DESTDIR}/lib/systemd/system/forticlient.service ]; then
+	# Move systemd service
+	if [ -f "${DESTDIR}/lib/systemd/system/forticlient.service" ]; then
 		vmkdir usr/lib/systemd/system
-		mv ${DESTDIR}/lib/systemd/system/forticlient.service \
-			${DESTDIR}/usr/lib/systemd/system/forticlient.service
+		mv "${DESTDIR}/lib/systemd/system/forticlient.service" \
+			"${DESTDIR}/usr/lib/systemd/system/forticlient.service"
 	fi
-	rm -rf ${DESTDIR}/lib
+	rm -rf "${DESTDIR}/lib"
 
-	# Runtime directory - intentionally empty at install time
 	vmkdir var/lib/forticlient
 
-	vlicense ${DESTDIR}/usr/share/doc/forticlient/copyright LICENSE
+	vlicense "${DESTDIR}/usr/share/doc/forticlient/copyright" LICENSE
 
-	# Symlink to the fortivpn CLI
 	vmkdir usr/bin
-	ln -sf /opt/forticlient/fortivpn ${DESTDIR}/usr/bin/fortivpn
+	ln -sf /opt/forticlient/fortivpn "${DESTDIR}/usr/bin/fortivpn"
 }
