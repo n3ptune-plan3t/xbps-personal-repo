@@ -109,7 +109,7 @@ chasm-bare_package() {
 		vmove usr/bin/bare
 		vmove usr/bin/bare-open
 		vmove usr/share/man/man1/bare.1
-		vmove LICENSE.bare
+		vmove usr/share/licenses/chasm/LICENSE.bare
 	}
 }
 
@@ -118,7 +118,7 @@ chasm-show_package() {
 	pkg_install() {
 		vmove usr/bin/show
 		vmove usr/share/man/man1/show.1
-		vmove LICENSE.show
+		vmove usr/share/licenses/chasm/LICENSE.show
 	}
 }
 
@@ -126,7 +126,7 @@ chasm-glass_package() {
 	short_desc="CHasm: X11 terminal emulator, kitty graphics, XRender (pure asm)"
 	pkg_install() {
 		vmove usr/bin/glass
-		vmove LICENSE.glass
+		vmove usr/share/licenses/chasm/LICENSE.glass
 	}
 }
 
@@ -135,7 +135,7 @@ chasm-tile_package() {
 	pkg_install() {
 		vmove usr/bin/tile
 		vmove usr/bin/strip
-		vmove LICENSE.tile
+		vmove usr/share/licenses/chasm/LICENSE.tile
 	}
 }
 
@@ -151,7 +151,7 @@ chasm-glyph_package() {
 	short_desc="CHasm: standalone TrueType/OpenType glyph rasterizer (pure asm)"
 	pkg_install() {
 		vmove usr/bin/glyph
-		vmove LICENSE.glyph
+		vmove usr/share/licenses/chasm/LICENSE.glyph
 	}
 }
 
@@ -159,7 +159,7 @@ chasm-spot_package() {
 	short_desc="CHasm: presenter spotlight/draw/highlight/OCR overlay (pure asm)"
 	pkg_install() {
 		vmove usr/bin/spot
-		vmove LICENSE.spot
+		vmove usr/share/licenses/chasm/LICENSE.spot
 	}
 }
 
@@ -175,6 +175,6 @@ chasm-bolt_package() {
 	pkg_install() {
 		vmove usr/bin/bolt
 		vmove usr/bin/bolt-auth
-		vmove LICENSE.bolt
+		vmove usr/share/licenses/chasm/LICENSE.bolt
 	}
 }
