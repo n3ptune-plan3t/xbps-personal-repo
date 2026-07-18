@@ -59,6 +59,12 @@ _bolt=bolt-${_bolt_commit}
 _spot=spot-${_spot_commit}
 
 do_build() {
+	# glass.asm does `%include "../glyph/glyph.asm"` (a real cross-repo
+	# dependency, not a bundled copy) - nasm resolves that relative to
+	# glass's own directory, so it needs a sibling dir literally named
+	# "glyph", not "glyph-<commit>".
+	ln -sf ${_glyph} glyph
+
 	make -C ${_bare} PREFIX=/usr
 	make -C ${_show} PREFIX=/usr
 	make -C ${_glass} PREFIX=/usr
