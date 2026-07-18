@@ -1,0 +1,25 @@
+# Template file for 'frame-x11'
+# Note: pkgname is "frame-x11", not "frame" - Void already has an
+# unrelated "frame" package (Touch Frame Library).
+_commit=55948f70e855ecf7604e55f57a4dda9e19ce6237
+pkgname=frame-x11
+version=0.0.141
+revision=1
+archs="x86_64*"
+hostmakedepends="nasm"
+short_desc="Pure x86_64-assembly X11 display server (WIP, phase 4/14 of 14)"
+maintainer="wn <your@email.here>"
+license="Unlicense"
+homepage="https://github.com/isene/frame"
+distfiles="https://github.com/isene/frame/archive/${_commit}.tar.gz"
+checksum=1d7bae75096ac1ccdc42080c3251a9a2199cdda19b5666a51cffecb315b731d3
+
+wrksrc="frame-${_commit}"
+
+do_build() {
+	make PREFIX=/usr
+}
+
+do_install() {
+	make PREFIX=/usr DESTDIR=${DESTDIR} install
+}
