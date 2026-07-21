@@ -1,0 +1,26 @@
+# Template file for 'niri-screenshare'
+pkgname=niri-screenshare
+version=0.1.0
+revision=1
+build_style=cargo
+short_desc="Portal backend for niri implementing ScreenCast"
+maintainer="pantarune <https://github.com/pantarune/niri-screenshare>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/pantarune/niri-screenshare"
+distfiles="https://github.com/pantarune/niri-screenshare/archive/v${version}.tar.gz"
+checksum="SKIP"
+depends="niri pipewire xdg-desktop-portal"
+hostmakedepends="cargo"
+
+do_install() {
+	vmkdir usr/lib
+	vinstall target/release/niri-screenshare 755 usr/lib niri-screenshare
+	vmkdir usr/share/xdg-desktop-portal/portals
+	vinstall data/niri.portal 644 usr/share/xdg-desktop-portal/portals niri.portal
+	vmkdir usr/share/dbus-1/services
+	vinstall data/org.freedesktop.impl.portal.desktop.niri.service 644 \
+		usr/share/dbus-1/services org.freedesktop.impl.portal.desktop.niri.service
+	vmkdir usr/lib/systemd/user
+	vinstall data/niri-screenshare.service 644 \
+		usr/lib/systemd/user niri-screenshare.service
+}
