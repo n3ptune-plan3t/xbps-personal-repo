@@ -1,26 +1,32 @@
 # Template file for 'forticlient-vpn'
 pkgname=forticlient-vpn
 version=7.4.3.5411
-revision=1
-archs="x86_64*"
-depends="alsa-lib at-spi2-core bash cairo dbus expat glib glibc gtk+
- gtk+3 hicolor-icon-theme libcups libdrm libgcc libnotify libsecret
- libX11 libxcb libXcomposite libXdamage libXext libXfixes libxkbcommon
- libXrandr mesa nspr nss pango procps-ng util-linux zlib"
-short_desc="FortiClient VPN-only build from the official Fortinet package"
-maintainer="wn <your@email.here>"
+revision=2
+short_desc="FortiClient VPN-only from the official Fortinet package"
+maintainer="n3ptune-plan3t <your@email.here>"
 license="custom:LicenseRef-fortinet"
 homepage="https://www.fortinet.com/support/product-downloads"
 _distName="forticlient_vpn_${version}_amd64.deb"
 distfiles="https://filestore.fortinet.com/forticlient/downloads/${_distName}"
 checksum=d2c0366decbf0b907fbf0d9306b8ac0b705d2d9cb4eb7b946ae06ce5388d4e5a
+depends="
+	alsa-lib at-spi2-core bash cairo dbus expat glib glibc
+	gtk+ gtk+3 hicolor-icon-theme libcups libdrm libelogind
+	libgcc libnotify libsecret libX11 libxcb libXcomposite
+	libXdamage libXext libXfixes libxkbcommon libXrandr
+	mesa nspr nss pango procps-ng util-linux zlib"
 nopie=yes
 nodebug=yes
 nostrip=yes
 allow_unknown_shlibs=yes
 noshlibprovides=yes
 conflicts="forticlient>=0"
-provides="fortivpn-${version}_${revision} FortiClient-${version}_${revision}"
+provides="
+	fortivpn-${version}_${revision}
+	FortiClient-${version}_${revision}"
+conf_files="/etc/forticlient"
+mutable_files="/var/lib/forticlient"
+tags="vpn fortinet enterprise"
 
 # Verified against the actual extracted binaries (readelf -d on every
 # ELF under opt/forticlient/): NO binary links against libsystemd.so.0.
@@ -32,27 +38,42 @@ provides="fortivpn-${version}_${revision} FortiClient-${version}_${revision}"
 # optional "legacy" one the PKGBUILD's optdepends implied - fixed above.
 
 do_install() {
-	# xbps-src's own extract phase already unpacks the .deb's data.tar.*
-	# straight into ${wrksrc} (with --no-strip-components, so opt/,
-	# usr/, lib/ etc land intact) - no manual ar/bsdtar needed here.
+	# xbps-src's own extract phase already unpacks the .deb's
+	# data.tar.* straight into ${wrksrc} (with
+	# --no-strip-components, so opt/, usr/, lib/ etc land intact)
+	# - no manual ar/bsdtar needed here.
 	cp -R ${wrksrc}/* ${DESTDIR}
 }
 
 post_install() {
-	# Move systemd service from non-standard /lib to /usr/lib
-	if [ -f ${DESTDIR}/lib/systemd/system/forticlient.service ]; then
-		vmkdir usr/lib/systemd/system
-		mv ${DESTDIR}/lib/systemd/system/forticlient.service \
-			${DESTDIR}/usr/lib/systemd/system/forticlient.service
-	fi
+	# Remove systemd unit shipped by upstream; we ship a runit
+	# service instead. Left as reference per Manual guidance, but
+	# removed here since it's non-functional on Void and would
+	# confuse users.
 	rm -rf ${DESTDIR}/lib
 
-	# Runtime directory - intentionally empty at install time
+	# Runtime data directory with initial config database
 	vmkdir var/lib/forticlient
+	cp ${DESTDIR}/opt/forticlient/.config.db.init \
+		${DESTDIR}/var/lib/forticlient/config.db
+	chmod 600 ${DESTDIR}/var/lib/forticlient/config.db
 
 	vlicense ${DESTDIR}/usr/share/doc/forticlient/copyright LICENSE
 
 	# Symlink to the fortivpn CLI
 	vmkdir usr/bin
-	ln -sf /opt/forticlient/fortivpn ${DESTDIR}/usr/bin/fortivpn
+	ln -sf /opt/forticlient/fortivpn \
+		${DESTDIR}/usr/bin/fortivpn
+
+	# Symlink the CLI for the legacy forticlient command
+	ln -sf /opt/forticlient/forticlient-cli \
+		${DESTDIR}/usr/bin/forticlient
+
+	# Fix the tray "Quit" action: upstream uses systemctl,
+	# replace with sv.
+	vsed -i ${DESTDIR}/opt/forticlient/stop-forticlient.sh \
+		-e 's|systemctl stop forticlient|sv stop forticlient|'
+
+	# Install the runit service for the scheduler daemon.
+	vsv forticlient
 }
