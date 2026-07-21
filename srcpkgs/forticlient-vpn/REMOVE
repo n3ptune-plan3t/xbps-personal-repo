@@ -1,0 +1,8 @@
+# REMOVE
+case "$ACTION" in
+pre)
+	# Stop the runit service and kill any leftover processes.
+	sv stop forticlient 2>/dev/null || true
+	pkill -f /opt/forticlient 2>/dev/null || true
+	;;
+esac
