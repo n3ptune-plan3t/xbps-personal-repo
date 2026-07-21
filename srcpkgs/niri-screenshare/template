@@ -14,7 +14,7 @@ hostmakedepends="cargo"
 
 do_install() {
 	vmkdir usr/lib
-	vinstall target/release/niri-screenshare 755 usr/lib niri-screenshare
+	vinstall target/release/xdg-desktop-portal-niri 755 usr/lib niri-screenshare
 	vmkdir usr/share/xdg-desktop-portal/portals
 	vinstall data/niri.portal 644 usr/share/xdg-desktop-portal/portals niri.portal
 	vmkdir usr/share/dbus-1/services
