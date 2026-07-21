@@ -24,7 +24,6 @@ conflicts="forticlient>=0"
 provides="
 	fortivpn-${version}_${revision}
 	FortiClient-${version}_${revision}"
-conf_files="/etc/forticlient"
 mutable_files="/var/lib/forticlient"
 tags="vpn fortinet enterprise"
 
