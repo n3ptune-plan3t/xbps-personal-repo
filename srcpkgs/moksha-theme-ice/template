@@ -1,0 +1,46 @@
+# Template file for 'mokshaice'
+_commit=b5064b2cc77d505b359f917e9db6cf6a234306e1
+pkgname=moksha-theme-ice
+version=0.1
+revision=1
+makedepends="efl-devel"
+depends="moksha hicolor-icon-theme papirus-icon-theme"
+short_desc="Ice edje shell theme for Moksha"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
+license="MIT, GPL-3.0-only"
+homepage="https://github.com/thewaiter/MokshaIce"
+distfiles="https://github.com/thewaiter/MokshaIce/archive/${_commit}.tar.gz"
+checksum=
+
+wrksrc="MokshaIce-${_commit}"
+
+do_build() {
+	cd ice
+	edje_cc -id ./img -fd . default.edc -o ../MokshaIce.edj
+}
+
+do_install() {
+	vmkdir usr/share/enlightenment/data/themes
+	install -Dm644 MokshaIce.edj \
+		${DESTDIR}/usr/share/enlightenment/data/themes/MokshaIce.edj
+
+	vmkdir usr/share/themes/MokshaGreen
+	cp -R MokshaIce-GTK/. ${DESTDIR}/usr/share/themes/MokshaIce/
+
+	vmkdir usr/share/icons/MokshaIce
+  # Make it inherit Papirus-Dark
+  vsed -i MokshaIce-Icons/index.theme \
+		-e 's/^Inherits=/Inherits=Papirus-Dark,/'
+
+	cp -R MokshaIce-Icons/. ${DESTDIR}/usr/share/icons/MokshaIce/
+	# copyright/LICENSE/index.theme ship as package files elsewhere;
+	# don't duplicate them inside the installed icon theme tree.
+	rm -f ${DESTDIR}/usr/share/icons/MokshaIce/LICENSE
+	rm -f ${DESTDIR}/usr/share/icons/MokshaIce/copyright
+
+}
+
+post_install() {
+	vlicense LICENSE
+	vdoc COPYING-PLAIN
+}
