@@ -16,17 +16,17 @@ wrksrc="MokshaIce-${_commit}"
 
 do_build() {
 	cd ice
-	edje_cc -id ./img -fd . default-dm.edc -o ../Ice.edj
+	edje_cc -id ./img -fd . default-dm.edc -o ../MokshaIce.edj
 }
 
 do_install() {
 	vmkdir usr/share/enlightenment/data/themes
-	install -Dm644 Ice.edj \
-		${DESTDIR}/usr/share/enlightenment/data/themes/Ice.edj
+	install -Dm644 MokshaIce.edj \
+		${DESTDIR}/usr/share/enlightenment/data/themes/MokshaIce.edj
 	
 	vmkdir usr/share/terminology/colorschemes
-	install -Dm644 Ice.eet \
-		${DESTDIR}/usr/share/terminology/colorschemes/Ice.eet
+	install -Dm644 MokshaIce.eet \
+		${DESTDIR}/usr/share/terminology/colorschemes/MokshaIce.eet
 
 	vmkdir usr/share/themes/MokshaIce
 	cp -R MokshaIce-GTK/. ${DESTDIR}/usr/share/themes/MokshaIce/
