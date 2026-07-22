@@ -1,26 +1,45 @@
 # Template file for 'niri-screenshare'
+_ver=0.1.5
 pkgname=niri-screenshare
-version=0.1.0
+version=0.1.5
 revision=1
 build_style=cargo
 short_desc="Portal backend for niri implementing ScreenCast"
-maintainer="pantarune <https://github.com/pantarune/niri-screenshare>"
+maintainer="wn <your@email.here>"
 license="GPL-3.0-or-later"
 homepage="https://github.com/pantarune/niri-screenshare"
-distfiles="https://github.com/pantarune/niri-screenshare/archive/v${version}.tar.gz"
-checksum="SKIP"
+distfiles="https://github.com/pantarune/niri-screenshare/archive/refs/tags/v${_ver}.tar.gz"
+checksum=7701b0bf71038110802c963ac2cf3868badee8a76c95edea4e8c98e668d2884a
 depends="niri pipewire xdg-desktop-portal"
 hostmakedepends="cargo"
 
+wrksrc="niri-screenshare-${_ver}"
+
+# Upstream's Cargo.toml package version has been stuck at "0.1.0" since
+# the first release, even at newer tags - version= above tracks the
+# real git tag (v0.1.5, the latest as of this writing), not the stale
+# in-repo string. When updating, check `git ls-remote --tags` rather
+# than trusting Cargo.toml.
+
 do_install() {
-	vmkdir usr/lib
-	vinstall target/release/xdg-desktop-portal-niri 755 usr/lib niri-screenshare
-	vmkdir usr/share/xdg-desktop-portal/portals
-	vinstall data/niri.portal 644 usr/share/xdg-desktop-portal/portals niri.portal
-	vmkdir usr/share/dbus-1/services
+	# build_style=cargo always passes --target ${RUST_TARGET}, so the
+	# binary lands under target/${RUST_TARGET}/release/, not the bare
+	# target/release/ path upstream's own PKGBUILD assumes (it works
+	# around this with CARGO_TARGET_DIR, which Void's build style
+	# doesn't set). Also: this is a portal backend invoked by full path
+	# from its D-Bus/systemd unit, not a $PATH binary - it belongs in
+	# /usr/lib, matching upstream's own PKGBUILD, not /usr/bin.
+	vinstall target/${RUST_TARGET}/release/niri-screenshare 755 usr/lib
+
+	vinstall data/niri.portal 644 usr/share/xdg-desktop-portal/portals
 	vinstall data/org.freedesktop.impl.portal.desktop.niri.service 644 \
-		usr/share/dbus-1/services org.freedesktop.impl.portal.desktop.niri.service
-	vmkdir usr/lib/systemd/user
-	vinstall data/niri-screenshare.service 644 \
-		usr/lib/systemd/user niri-screenshare.service
+		usr/share/dbus-1/services
+	vinstall data/niri-screenshare.service 644 usr/lib/systemd/user
+	# Tells xdg-desktop-portal to route ScreenCast requests to this
+	# backend specifically - present in data/ but not referenced by
+	# upstream's own PKGBUILD (looks like an oversight there, not
+	# something intentionally left out).
+	vinstall data/niri-portals.conf 644 usr/share/xdg-desktop-portal
+
+	vlicense LICENSE
 }
