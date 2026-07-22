@@ -23,10 +23,6 @@ do_install() {
 	vmkdir usr/share/enlightenment/data/themes
 	install -Dm644 MokshaIce.edj \
 		${DESTDIR}/usr/share/enlightenment/data/themes/MokshaIce.edj
-	
-	vmkdir usr/share/terminology/colorschemes
-	install -Dm644 MokshaIce.eet \
-		${DESTDIR}/usr/share/terminology/colorschemes/MokshaIce.eet
 
 	vmkdir usr/share/themes/MokshaIce
 	cp -R MokshaIce-GTK/. ${DESTDIR}/usr/share/themes/MokshaIce/
