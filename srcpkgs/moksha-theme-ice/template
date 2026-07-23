@@ -2,7 +2,7 @@
 _commit=b5064b2cc77d505b359f917e9db6cf6a234306e1
 pkgname=moksha-theme-ice
 version=0.1
-revision=1
+revision=2
 makedepends="efl-devel"
 depends="moksha hicolor-icon-theme papirus-icon-theme"
 short_desc="Ice edje shell theme for Moksha"
