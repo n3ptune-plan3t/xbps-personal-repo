@@ -33,14 +33,4 @@ do_install() {
 		-e 's/^Inherits=/Inherits=Papirus-Dark,/'
 
 	cp -R MokshaIce-Icons/. ${DESTDIR}/usr/share/icons/MokshaIce/
-	# copyright/LICENSE/index.theme ship as package files elsewhere;
-	# don't duplicate them inside the installed icon theme tree.
-	rm -f ${DESTDIR}/usr/share/icons/MokshaIce/LICENSE
-	rm -f ${DESTDIR}/usr/share/icons/MokshaIce/copyright
-
-}
-
-post_install() {
-	vlicense LICENSE
-	vdoc COPYING-PLAIN
 }
