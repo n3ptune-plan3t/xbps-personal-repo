@@ -16,7 +16,7 @@ nostrip=yes
 wrksrc="MokshaJapan-${_commit}"
 
 do_build() {
-	cd Japan
+	cd MokshaJapan
 	edje_cc -id ./img -fd . default-dm.edc -o ../MokshaJapan.edj
 }
 
