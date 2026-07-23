@@ -1,0 +1,41 @@
+# Template file for 'MokshaJapan'
+_commit=325e6ded4d3689b02a05f6783d7a02fe9aab3d6e
+pkgname=moksha-theme-japan
+version=0.1
+revision=1
+makedepends="efl-devel"
+depends="moksha hicolor-icon-theme papirus-icon-theme"
+short_desc="Japan edje shell theme for Moksha"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
+license="MIT, GPL-3.0-only"
+homepage="https://github.com/thewaiter/MokshaJapan"
+distfiles="https://github.com/thewaiter/MokshaJapan/archive/${_commit}.tar.gz"
+checksum=
+nostrip=yes
+
+wrksrc="MokshaJapan-${_commit}"
+
+do_build() {
+	cd Japan
+	edje_cc -id ./img -fd . default-dm.edc -o ../MokshaJapan.edj
+}
+
+do_install() {
+	vmkdir usr/share/enlightenment/data/themes
+	install -Dm644 MokshaJapan.edj \
+		${DESTDIR}/usr/share/enlightenment/data/themes/MokshaJapan.edj
+
+	vmkdir usr/share/themes/MokshaJapan
+	cp -R MokshaJapan-GTK/. ${DESTDIR}/usr/share/themes/MokshaJapan/
+
+	vmkdir usr/share/icons/MokshaJapan
+  # Make it inherit Papirus-Dark
+  vsed -i MokshaJapan-Icons/index.theme \
+		-e 's/^Inherits=/Inherits=Papirus-Dark,/'
+
+	cp -R MokshaJapan-Icons/. ${DESTDIR}/usr/share/icons/MokshaJapan/
+}
+
+post_install() {
+  vlicense LICENSE
+}
