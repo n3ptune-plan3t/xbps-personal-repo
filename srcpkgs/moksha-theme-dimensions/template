@@ -2,7 +2,7 @@
 _commit=6e2747943d2189c9e6954b8266b0074a2eb2a2bc
 pkgname=moksha-theme-dimensions
 version=0.0.0.20260105
-revision=2
+revision=3
 depends="moksha hicolor-icon-theme papirus-icon-theme"
 short_desc="Dimensions theme for the Moksha desktop"
 maintainer="n3ptune-plan3t <n3ptune@plan3t>"
