@@ -11,6 +11,7 @@ homepage="https://github.com/thewaiter/MokshaDimensions"
 distfiles="https://github.com/thewaiter/MokshaDimensions/archive/${_commit}.tar.gz"
 
 checksum=""
+nostrip=yes
 
 wrksrc="MokshaDimensions-${_commit}"
 
