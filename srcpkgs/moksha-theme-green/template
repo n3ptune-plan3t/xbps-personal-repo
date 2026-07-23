@@ -8,7 +8,7 @@
 _commit=1aea3216d0e4e26de2ba49c6cfa22627f4692f58
 pkgname=moksha-theme-green
 version=0.1
-revision=1
+revision=2
 makedepends="efl-devel"
 depends="moksha hicolor-icon-theme papirus-icon-theme"
 short_desc="Green edje shell theme for Moksha"
@@ -21,6 +21,7 @@ license="MIT, GPL-3.0-only"
 homepage="https://github.com/thewaiter/MokshaGreen"
 distfiles="https://github.com/thewaiter/MokshaGreen/archive/${_commit}.tar.gz"
 checksum=6842d01163fd3ec1f3e1eb9a95a811fe3934c382cca4dd5375339ae7e521f290
+nostrip=yes
 
 wrksrc="MokshaGreen-${_commit}"
 
