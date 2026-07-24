@@ -1,7 +1,7 @@
 # Template file for 'niri-screenshare'
-_ver=0.1.5
+_ver=0.2.0
 pkgname=niri-screenshare
-version=0.1.5
+version=0.2.0
 revision=1
 build_style=cargo
 short_desc="Portal backend for niri implementing ScreenCast"
@@ -9,7 +9,7 @@ maintainer="wn <your@email.here>"
 license="GPL-3.0-or-later"
 homepage="https://github.com/pantarune/niri-screenshare"
 distfiles="https://github.com/pantarune/niri-screenshare/archive/refs/tags/v${_ver}.tar.gz"
-checksum=7701b0bf71038110802c963ac2cf3868badee8a76c95edea4e8c98e668d2884a
+checksum=
 depends="niri pipewire xdg-desktop-portal"
 hostmakedepends="cargo"
 
@@ -17,7 +17,7 @@ wrksrc="niri-screenshare-${_ver}"
 
 # Upstream's Cargo.toml package version has been stuck at "0.1.0" since
 # the first release, even at newer tags - version= above tracks the
-# real git tag (v0.1.5, the latest as of this writing), not the stale
+# real git tag (v0.2.0, the latest as of this writing), not the stale
 # in-repo string. When updating, check `git ls-remote --tags` rather
 # than trusting Cargo.toml.
 
