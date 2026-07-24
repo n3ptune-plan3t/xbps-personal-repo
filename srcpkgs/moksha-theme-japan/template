@@ -17,7 +17,7 @@ wrksrc="MokshaJapan-${_commit}"
 
 do_build() {
 	cd MokshaJapan
-	edje_cc -id ./img -fd . default-dm.edc -o ../MokshaJapan.edj
+	edje_cc -id ./img -fd . default.edc -o ../MokshaJapan.edj
 }
 
 do_install() {
