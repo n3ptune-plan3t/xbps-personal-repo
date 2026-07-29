@@ -1,8 +1,8 @@
 # Template file for 'moksha'
-_commit=b11ceca00c556a9b6b5f1211cd0f5165d3a3b4b8
+_commit=ee4fd3ec5507c3134a969c4c7b737f6b0c38e0c6
 pkgname=moksha
 version=0.4.2
-revision=1
+revision=2
 build_style=gnu-configure
 configure_args="--sysconfdir=/etc --disable-bodhi"
 hostmakedepends="autoconf automake libtool pkg-config gettext efl"
@@ -25,9 +25,9 @@ pre_configure() {
 }
 
 post_install() {
-	sed -i 's|^action:.*halt.*|action: halt /sbin/shutdown|g' \
+	sed -i 's|^action:.*halt.*|action: halt init 0|g' \
 		${DESTDIR}/etc/enlightenment/sysactions.conf
-	sed -i 's|^action:.*reboot.*|action: reboot /sbin/reboot|g' \
+	sed -i 's|^action:.*reboot.*|action: reboot init 6|g' \
 		${DESTDIR}/etc/enlightenment/sysactions.conf
 	sed -i 's|^action:.*suspend.*|action: suspend zzz|g' \
 		${DESTDIR}/etc/enlightenment/sysactions.conf
