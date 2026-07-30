@@ -1,0 +1,41 @@
+# Template file for 'MokshaForum'
+_commit=be48753241e2f07b2e2a553a580e8a40ae2b3416
+pkgname=moksha-theme-forum
+version=0.1
+revision=1
+makedepends="efl-devel"
+depends="moksha hicolor-icon-theme papirus-icon-theme"
+short_desc="Forum edje shell theme for Moksha"
+maintainer="n3ptune-plan3t <n3ptune@plan3t>"
+license="MIT, GPL-3.0-only"
+homepage="https://github.com/thewaiter/MokshaForum"
+distfiles="https://github.com/thewaiter/MokshaForum/archive/${_commit}.tar.gz"
+checksum=
+nostrip=yes
+
+wrksrc="MokshaForum-${_commit}"
+
+do_build() {
+	cd forum-moksha
+	edje_cc -id ./img -fd . bodhiforum.edc -o ../MokshaForum.edj
+}
+
+do_install() {
+	vmkdir usr/share/enlightenment/data/themes
+	install -Dm644 MokshaForum.edj \
+		${DESTDIR}/usr/share/enlightenment/data/themes/MokshaForum.edj
+
+	vmkdir usr/share/themes/MokshaForum
+	cp -R BodhiForum\ GTK/. ${DESTDIR}/usr/share/themes/MokshaForum/
+
+	vmkdir usr/share/icons/MokshaForum
+  # Make it inherit Papirus-Dark
+  vsed -i Icons-Moksha-Forum/index.theme \
+		-e 's/^Inherits=/Inherits=Papirus-Dark,/'
+
+	cp -R Icons-Moksha-Forum/. ${DESTDIR}/usr/share/icons/MokshaForum/
+}
+
+post_install() {
+  vlicense LICENSE
+}
