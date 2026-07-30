@@ -1,5 +1,5 @@
 # Template file for 'MokshaForum'
-_commit=be48753241e2f07b2e2a553a580e8a40ae2b3416
+_commit=c55ae22e4aae90292b9288cb045060fae38eaf42
 pkgname=moksha-theme-forum
 version=0.1
 revision=1
@@ -26,14 +26,14 @@ do_install() {
 		${DESTDIR}/usr/share/enlightenment/data/themes/MokshaForum.edj
 
 	vmkdir usr/share/themes/MokshaForum
-	cp -R BodhiForum\ GTK/. ${DESTDIR}/usr/share/themes/MokshaForum/
+	cp -R MokshaForum-GTK/. ${DESTDIR}/usr/share/themes/MokshaForum/
 
 	vmkdir usr/share/icons/MokshaForum
   # Make it inherit Papirus-Dark
-  vsed -i Icons-Moksha-Forum/index.theme \
+  vsed -i MokshaForum-Icons/index.theme \
 		-e 's/^Inherits=/Inherits=Papirus-Dark,/'
 
-	cp -R Icons-Moksha-Forum/. ${DESTDIR}/usr/share/icons/MokshaForum/
+	cp -R MokshaForum-Icons/. ${DESTDIR}/usr/share/icons/MokshaForum/
 }
 
 post_install() {
