@@ -12,7 +12,6 @@ _commit="9f5ce4d46e146e2d3689de730cda78c75a123fb9"
 distfiles="https://github.com/Fabric-Development/fabric-cli/archive/${_commit}.tar.gz"
 checksum=f4eb1957fcc26c872f37556f729e2c7f197ff0bcddcefdca13097b72f9d845a3
 nopie=yes
-repository=d77
 wrksrc="fabric-cli-${_commit}"
 
 post_install() {
