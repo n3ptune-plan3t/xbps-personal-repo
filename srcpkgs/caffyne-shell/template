@@ -9,11 +9,10 @@ short_desc="New, lightweight, desktop shell for linux, powered by Fabric"
 maintainer="Daniel Azevedo <daniazevedo77@posteo.net>"
 license="GPL-3.0-or-later"
 homepage="https://caffyne.org/"
-_commit="b59729c"
+_commit="b59729cb9e649484f48fa90ccb85a04b7050473f"
 distfiles="https://github.com/caffyne-org/caffyne-shell/archive/${_commit}.tar.gz"
-checksum=b59729cb9e649484f48fa90ccb85a04b7050473f
+checksum=
 python_version=3
-repository=d77
 
 do_install() {
 	vsed -i '3i python3 -m venv ~/.config/caffyne-shell/venv' start.sh
