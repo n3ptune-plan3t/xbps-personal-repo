@@ -13,7 +13,6 @@ homepage="https://ffpy.org/"
 _commit="85cacf660b1a324525a4dd9b512521e55ef7f89b"
 distfiles="https://github.com/Fabric-Development/fabric/archive/${_commit}.tar.gz"
 checksum=
-repository=d77
 wrksrc="fabric-${_commit}"
 
 post_install() {
