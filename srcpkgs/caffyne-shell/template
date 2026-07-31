@@ -13,7 +13,7 @@ _commit="b59729cb9e649484f48fa90ccb85a04b7050473f"
 distfiles="https://github.com/caffyne-org/caffyne-shell/archive/${_commit}.tar.gz"
 checksum=
 python_version=3
-
+wrksrc="caffyne-shell-${_commit}"
 do_install() {
 	vsed -i '3i python3 -m venv ~/.config/caffyne-shell/venv' start.sh
 	python -m venv venv
