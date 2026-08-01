@@ -1,30 +1,67 @@
 # Template file for 'caffyne-shell'
+_commit=b59729cb9e649484f48fa90ccb85a04b7050473f
 pkgname=caffyne-shell
-version=1.0.0.b59729c
+version=0.0.1
 revision=1
-hostmakedepends="python3-devel python3-pip cmake git pkg-config"
-makedepends="gtk+3-devel cairo-devel libgirepository-devel libdbusmenu-glib-devel libbluetooth-devel python3-cairo-devel libglib-devel"
-depends="awww matugen cinnamon-desktop playerctl fabric-cli gnome-bluetooth bluez brightnessctl NetworkManager python3-loguru python3-click"
-short_desc="New, lightweight, desktop shell for linux, powered by Fabric"
-maintainer="Daniel Azevedo <daniazevedo77@posteo.net>"
-license="GPL-3.0-or-later"
-homepage="https://caffyne.org/"
-_commit="b59729cb9e649484f48fa90ccb85a04b7050473f"
+hostmakedepends="pkg-config"
+makedepends="gtk+3-devel wayland-devel"
+depends="python3-fabric python3-cffi python3-Pillow python3-psutil
+ python3-rapidfuzz python3-setproctitle python3-six python3-thefuzz
+ python3-pam gnome-bluetooth libdbusmenu-gtk3 gtk-layer-shell
+ matugen awww playerctl brightnessctl wf-recorder swayidle wlsunset
+ upower NetworkManager bluez"
+short_desc="Fabric-based Wayland desktop shell (bar, launcher, notifications, lock screen)"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
+license="MIT"
+homepage="https://github.com/caffyne-org/caffyne-shell"
 distfiles="https://github.com/caffyne-org/caffyne-shell/archive/${_commit}.tar.gz"
-checksum=
-python_version=3
+checksum=9d08e6d8ec316d64d87aa246048d7fb03c9a727fec06ba30c3f557b0640d2f06
 wrksrc="caffyne-shell-${_commit}"
+
+# Upstream has no tagged releases or version string anywhere in the repo;
+# version is arbitrarily pinned here and should be bumped on every
+# _commit update.
+#
+# No LICENSE file is shipped upstream despite package.nix declaring MIT,
+# so there is nothing to vlicense here. Re-check on future updates.
+#
+# cinnamon-desktop is listed as a dependency in upstream's package.nix
+# and install.sh, but neither caffyne-shell nor fabric import anything
+# from it (grepped both trees) - omitted here as dead weight. Re-check
+# on future updates in case a newer commit actually starts using it.
+#
+# Upstream code shells out to "awww" (services/wallpaper.py), not
+# "swww" as package.nix implies; awww is void-packaged and carries
+# replaces="swww>=0" upstream, i.e. it's the actively maintained
+# successor of the same tool.
+
+do_build() {
+	${CC} ${CFLAGS} ${LDFLAGS} -fPIC -Wall -Wextra -shared \
+		-o snippets/hacktk/lib/libhacktk.so snippets/hacktk/lib/hacktk.c \
+		$(pkg-config --cflags --libs gtk+-3.0) -lm
+
+	${CC} ${CFLAGS} ${LDFLAGS} -shared -fPIC -fvisibility=default \
+		$(pkg-config --cflags wayland-client) \
+		-o snippets/blur/lib/libblur.so \
+		snippets/blur/lib/blur.c \
+		snippets/blur/lib/ext-background-effect-v1-protocol.c \
+		-lwayland-client
+}
+
 do_install() {
-	vsed -i '3i python3 -m venv ~/.config/caffyne-shell/venv' start.sh
-	python -m venv venv
-	source venv/bin/activate
-	pip install --upgrade pip
-	pip install pycairo
-	pip install -r requirements.txt
-	cd snippets/blur/lib
-	make && cd ../../../
-	cd snippets/hacktk/lib
-	make && cd ../../../
-	vmkdir etc/xdg/caffyne-shell
-	vcopy '*' etc/xdg/caffyne-shell/
+	vmkdir usr/share/caffyne-shell
+	vcopy '*' usr/share/caffyne-shell
+	rm -f "${DESTDIR}/usr/share/caffyne-shell/flake.nix" \
+	      "${DESTDIR}/usr/share/caffyne-shell/flake.lock" \
+	      "${DESTDIR}/usr/share/caffyne-shell/package.nix" \
+	      "${DESTDIR}/usr/share/caffyne-shell/install.sh"
+
+	cat > caffyne-shell.sh <<-'EOF'
+	#!/bin/sh
+	cd /usr/share/caffyne-shell || exit 1
+	exec python3 main.py "$@"
+	EOF
+	vbin caffyne-shell.sh caffyne-shell
+
+	vdoc README.md
 }
