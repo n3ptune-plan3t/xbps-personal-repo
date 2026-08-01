@@ -1,0 +1,77 @@
+--- a/src/shell/session/session_action_runner.cpp
++++ b/src/shell/session/session_action_runner.cpp
+@@ -68,35 +68,66 @@
+     }
+   }
+ 
++  // NOTE: zzz does not need pkexec/sudo/setuid on a standard Void install -
++  // it works for the active seat user because it only requires write access
++  // to /sys/power/state, which elogind's udev ACLs grant to the logged-in
++  // seat user (it checks `test -w /sys/power/state` itself and fails
++  // cleanly with "sleep permission denied" otherwise). It is NOT a
++  // privileged binary (no setuid bit, no polkit action). ZZZ (same binary,
++  // invoked under its hibernate-mode argv0) needs the same, plus
++  // /sys/power/disk to be writable.
+   [[nodiscard]] const std::vector<std::vector<std::string>>& suspendCommandVariants() {
+     static const std::vector<std::vector<std::string>> variants = {
++        {"zzz"},
+         {"systemctl", "suspend"},
+         {"loginctl", "suspend"},
+         {"pm-suspend"},
+-        {"zzz"},
+-        {"pkexec", "pm-suspend"},
+-        {"run0", "pm-suspend"},
++        {"pkexec", "zzz"},
++        {"run0", "zzz"},
+         {"pkexec", "sh", "-c", "echo mem > /sys/power/state"},
+         {"run0", "sh", "-c", "echo mem > /sys/power/state"},
+-        {"sudo", "-n", "pm-suspend"},
+         {"sudo", "-n", "zzz"},
+         {"sudo", "-n", "sh", "-c", "echo mem > /sys/power/state"},
+     };
+     return variants;
+   }
+ 
++  // NOTE: unlike systemctl/loginctl (which route through polkit and are
++  // normally allowed for the active session without a password), `init 6`
++  // talks directly to PID 1 and is root-only with no privilege-elevation
++  // prompt of its own. On a stock desktop session this WILL fail with
++  // "Permission denied" unless the invoking user is root, or the pkexec/
++  // sudo fallback below succeeds (which itself requires a polkit rule or a
++  // passwordless sudoers entry to be pre-configured - it will not
++  // auto-prompt for a password in a Detached launch).
+   [[nodiscard]] const std::vector<std::vector<std::string>>& rebootCommandVariants() {
+     static const std::vector<std::vector<std::string>> variants = {
+-        {"systemctl", "reboot"}, {"loginctl", "reboot"}, {"reboot"},         {"/sbin/reboot"},
+-        {"/usr/sbin/reboot"},    {"pkexec", "reboot"},   {"run0", "reboot"}, {"sudo", "-n", "reboot"},
++        {"init", "6"},
++        {"systemctl", "reboot"},
++        {"loginctl", "reboot"},
++        {"reboot"},
++        {"/sbin/reboot"},
++        {"/usr/sbin/reboot"},
++        {"pkexec", "init", "6"},
++        {"run0", "init", "6"},
++        {"sudo", "-n", "init", "6"},
+     };
+     return variants;
+   }
+ 
++  // NOTE: same privilege caveat as rebootCommandVariants() above - `init 0`
++  // is root-only and has no built-in polkit/setuid elevation path.
+   [[nodiscard]] const std::vector<std::vector<std::string>>& shutdownCommandVariants() {
+     static const std::vector<std::vector<std::string>> variants = {
+-        {"systemctl", "poweroff"}, {"loginctl", "poweroff"}, {"poweroff"},         {"/sbin/poweroff"},
+-        {"/usr/sbin/poweroff"},    {"pkexec", "poweroff"},   {"run0", "poweroff"}, {"sudo", "-n", "poweroff"},
++        {"init", "0"},
++        {"systemctl", "poweroff"},
++        {"loginctl", "poweroff"},
++        {"poweroff"},
++        {"/sbin/poweroff"},
++        {"/usr/sbin/poweroff"},
++        {"pkexec", "init", "0"},
++        {"run0", "init", "0"},
++        {"sudo", "-n", "init", "0"},
+     };
+     return variants;
+   }
