@@ -1,0 +1,22 @@
+--- a/services/idle.py
++++ b/services/idle.py
+@@ -5,7 +5,6 @@
+ from gi.repository import GLib
+ from loguru import logger
+ from fabric.utils import get_relative_path
+-from utils.session import SESSION_MANAGER
+ import sys
+ 
+ def _get_screen_commands() -> tuple[str, str]:
+@@ -34,7 +33,10 @@
+ 
+ 
+ LOCK_CMD = f"{sys.executable} {get_relative_path('../lockscreen.py')} &"
+-SUSPEND_CMD = f"{SESSION_MANAGER} suspend"
++# zzz is not privileged on a standard Void install: it only needs write
++# access to /sys/power/state, which elogind's udev ACLs grant to the
++# active seat user. No pkexec/sudo/setuid is involved.
++SUSPEND_CMD = "zzz"
+ 
+ 
+ def _build_rule_commands() -> dict[str, tuple[str, Optional[str]]]:
