@@ -5,7 +5,7 @@ version=0.0.1
 revision=1
 hostmakedepends="pkg-config"
 makedepends="gtk+3-devel wayland-devel"
-depends="python3-fabric python3-cffi python3-Pillow python3-psutil
+depends="python3-fabric fabric-cli python3-cffi python3-Pillow python3-psutil
  python3-rapidfuzz python3-setproctitle python3-six python3-thefuzz
  python3-pam gnome-bluetooth libdbusmenu-gtk3 gtk-layer-shell
  matugen awww playerctl brightnessctl wf-recorder swayidle wlsunset
