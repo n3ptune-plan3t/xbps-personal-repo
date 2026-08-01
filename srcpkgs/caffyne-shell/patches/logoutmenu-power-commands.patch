@@ -1,0 +1,58 @@
+--- a/windows/quick_settings/menus/logoutmenu.py
++++ b/windows/quick_settings/menus/logoutmenu.py
+@@ -11,7 +11,6 @@
+ from services.wm.niri.service import Niri
+ from services.wm.hyprland.service import Hyprland
+ from services.wm.mango.service import Mango
+-from utils.session import SESSION_MANAGER
+ from gi.repository import GLib
+ from utils.sounds import play_sound
+ from lockscreen import lock
+@@ -137,7 +136,12 @@
+                             label="Reboot",
+                             on_clicked=lambda *_: confirm(
+                                 "arrow-clockwise-duotone", "Reboot",
+-                                lambda: subprocess.Popen(f"{SESSION_MANAGER} reboot", shell=True),
++                                # init 6 talks directly to PID 1 and is root-only -
++                                # unlike SESSION_MANAGER (systemctl/loginctl), it has
++                                # no polkit path, so this requires the caffyne-shell
++                                # process itself to be running as root, or a
++                                # pre-configured passwordless sudo/pkexec rule.
++                                lambda: subprocess.Popen("init 6", shell=True),
+                                 should_sound=True
+                             ),
+                         ),
+@@ -146,7 +150,10 @@
+                             label="Suspend",
+                             on_clicked=lambda *_: confirm(
+                                 "pause-circle-duotone", "Suspend",
+-                                lambda: subprocess.Popen(f"{SESSION_MANAGER} suspend", shell=True),
++                                # zzz is not privileged on a standard Void install: it
++                                # only needs write access to /sys/power/state, which
++                                # elogind's udev ACLs grant to the active seat user.
++                                lambda: subprocess.Popen("zzz", shell=True),
+                             ),
+                         ),
+                     ]),
+@@ -156,7 +163,8 @@
+                             label="Shutdown",
+                             on_clicked=lambda *_: confirm(
+                                 "power-duotone", "Shutdown",
+-                                lambda: subprocess.Popen(f"{SESSION_MANAGER} poweroff", shell=True),
++                                # init 0 is root-only, same caveat as Reboot above.
++                                lambda: subprocess.Popen("init 0", shell=True),
+                                 should_sound=True
+                             ),
+                         ),
+@@ -165,7 +173,10 @@
+                             label="Hibernate",
+                             on_clicked=lambda *_: confirm(
+                                 "circle-vertical-line", "Hibernate",
+-                                lambda: subprocess.Popen(f"{SESSION_MANAGER} hibernate", shell=True),
++                                # ZZZ is the same zzz binary invoked under its
++                                # hibernate-mode argv0; same privilege model as zzz,
++                                # but also needs /sys/power/disk to be writable.
++                                lambda: subprocess.Popen("ZZZ", shell=True),
+                             ),
+                         ),
+                     ]),
