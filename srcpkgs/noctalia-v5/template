@@ -1,24 +1,34 @@
 # Template file for 'noctalia'
-_commit=b86e4a0964744915ed2970d28fc86580b6332696
+_commit=9883f4c3d2d480410dbf89b2207c5e466044f2e9
 pkgname=noctalia-v5
 version=5.0.0
-revision=1
+revision=2
 build_style=meson
-configure_args="-Dtests=disabled -Djemalloc=disabled -Dnative_optimizations=false"
-hostmakedepends="pkg-config cmake"
+configure_args="-Dtests=disabled -Djemalloc=enabled -Dnative_optimizations=false"
+hostmakedepends="pkg-config wayland-devel"
 makedepends="cairo-devel pango-devel harfbuzz-devel freetype-devel
  fontconfig-devel librsvg-devel libxkbcommon-devel glib-devel
  polkit-devel pipewire-devel wireplumber-devel libcurl-devel
  libqalculate-devel libxml2-devel libmd4c-devel json-c++
  tomlplusplus-devel pam-devel sdbus-c++-devel wayland-devel
- wayland-protocols libwebp-devel libepoxy-devel stb"
+ wayland-protocols libwebp-devel libepoxy-devel MesaLib-devel stb
+ libsecret-devel libsodium-devel libical-devel libjxl-devel
+ libsndfile-devel jemalloc-devel"
+
+# Target znver1 (Zen 1) explicitly rather than relying on
+# native_optimizations/-march=native, which would instead bake in
+# whatever CPU the CI runner happens to have. This keeps codegen
+# reproducible and correct for the actual install target regardless
+# of the build host. xbps-src's hardening env prepends its own flags
+# on top of these later in the build, so -march/-mtune here still win.
+CFLAGS+=" -march=znver1 -mtune=znver1"
+CXXFLAGS+=" -march=znver1 -mtune=znver1"
 short_desc="Lightweight Wayland shell built directly on Wayland and OpenGL ES"
 maintainer="n3ptune-planet <n3ptune@plan3t>"
 license="MIT"
 homepage="https://github.com/noctalia-dev/noctalia"
 distfiles="https://github.com/noctalia-dev/noctalia/archive/${_commit}.tar.gz"
-checksum=0b50ba8b2e7a7688d629e317962fc817a22ae0085afd362767992f9c10a8129c
-
+checksum=c1b30c0308e9c0acdd0f637265cd0e4a960a4529c4f40a2ccd24cae4e77c69ca
 wrksrc="noctalia-${_commit}"
 
 post_install() {
