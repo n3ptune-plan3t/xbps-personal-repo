@@ -1,0 +1,30 @@
+# Template file for 'python3-fabric'
+_commit=85cacf660b1a324525a4dd9b512521e55ef7f89b
+_gitname=fabric
+pkgname=python3-fabric
+version=0.0.2
+revision=1
+build_style=python3-module
+hostmakedepends="python3-setuptools"
+depends="python3-click python3-loguru python3-cairo python3-gobject
+ gtk-layer-shell libdbusmenu-gtk3"
+short_desc="Next-gen Python framework for creating system widgets on *Nix (git snapshot)"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
+license="AGPL-3.0-or-later"
+homepage="https://github.com/Fabric-Development/fabric"
+distfiles="https://github.com/Fabric-Development/${_gitname}/archive/${_commit}.tar.gz"
+checksum=d91f6c8e9d19d9e6f34aceb3c20054e9bff47bda65e5acc7284a02c92b20df92
+wrksrc="${_gitname}-${_commit}"
+
+# Upstream has no tagged releases; version is taken from pyproject.toml
+# and pinned to the commit above. Bump both together when updating.
+
+# gnome-bluetooth (fabric.bluetooth.service) and webkit2gtk (the optional
+# WebView widget) are intentionally not hard dependencies here: both
+# imports are wrapped/guarded upstream and only needed by consumers that
+# actually use those specific submodules. Add them as depends on the
+# consuming package (e.g. caffyne-shell) if it uses those features.
+
+post_install() {
+	vlicense LICENSE
+}
