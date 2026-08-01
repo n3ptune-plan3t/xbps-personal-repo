@@ -1,0 +1,31 @@
+# Template file for 'fabric-cli'
+_commit=9f5ce4d46e146e2d3689de730cda78c75a123fb9
+pkgname=fabric-cli
+version=0.0.2
+revision=1
+build_style=go
+go_import_path="github.com/Fabric-Development/fabric-cli"
+go_package="${go_import_path}/src"
+short_desc="Alternative CLI/IPC client for the Fabric widget framework"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
+license="AGPL-3.0-or-later"
+homepage="https://github.com/Fabric-Development/fabric-cli"
+distfiles="https://github.com/Fabric-Development/fabric-cli/archive/${_commit}.tar.gz"
+checksum=f4eb1957fcc26c872f37556f729e2c7f197ff0bcddcefdca13097b72f9d845a3
+wrksrc="fabric-cli-${_commit}"
+
+# Upstream has no tagged releases; version taken from meson.build/go.mod
+# metadata and pinned to the commit above. Bump both together on update.
+#
+# main() lives under ./src (module root has no buildable package), so
+# `go install` names the built binary "src" after the package dir; the
+# default go build_style do_install() would install it verbatim as
+# /usr/bin/src, hence the explicit rename below.
+
+do_install() {
+	vbin "${GOPATH}/bin/src" fabric-cli
+	vcompletion autocompletions/bash_autocomplete bash fabric-cli
+	vcompletion autocompletions/zsh_autocomplete zsh fabric-cli
+	vcompletion autocompletions/fish_autocomplete fish fabric-cli
+	vlicense LICENSE
+}
