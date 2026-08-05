@@ -2,7 +2,7 @@
 _commit=b59729cb9e649484f48fa90ccb85a04b7050473f
 pkgname=caffyne-shell
 version=0.0.1
-revision=1
+revision=2
 hostmakedepends="pkg-config"
 makedepends="gtk+3-devel wayland-devel"
 depends="python3-fabric fabric-cli python3-cffi python3-Pillow python3-psutil
@@ -17,6 +17,15 @@ homepage="https://github.com/caffyne-org/caffyne-shell"
 distfiles="https://github.com/caffyne-org/caffyne-shell/archive/${_commit}.tar.gz"
 checksum=9d08e6d8ec316d64d87aa246048d7fb03c9a727fec06ba30c3f557b0640d2f06
 wrksrc="caffyne-shell-${_commit}"
+
+# libhacktk.so and libblur.so are private ctypes/cffi plugins the app
+# dlopen()s from hacktk.py/blur.py at a path relative to their own
+# __file__ (via fabric.utils.get_relative_path) - they're not shared
+# system libraries meant for other consumers, so there's nothing to gain
+# by relocating them to /usr/lib and patching that lookup; whitelist
+# them for the ELF-in-/usr/share pkglint check instead (same pattern as
+# aerc's filters/ and hplip-plugin's bundled binaries).
+ignore_elf_dirs="/usr/share/caffyne-shell/snippets"
 
 # Upstream has no tagged releases or version string anywhere in the repo;
 # version is arbitrarily pinned here and should be bumped on every
