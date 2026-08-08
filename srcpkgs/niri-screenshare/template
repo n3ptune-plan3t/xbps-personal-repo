@@ -1,45 +1,50 @@
 # Template file for 'niri-screenshare'
-_ver=0.2.0
 pkgname=niri-screenshare
-version=0.2.0
+version=0.2.1
 revision=1
 build_style=cargo
-short_desc="Portal backend for niri implementing ScreenCast"
-maintainer="wn <your@email.here>"
+hostmakedepends="pkg-config"
+makedepends="gtk4-devel libadwaita-devel"
+depends="xdg-desktop-portal niri pipewire"
+short_desc="xdg-desktop-portal ScreenCast backend for niri"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
 license="GPL-3.0-or-later"
 homepage="https://github.com/pantarune/niri-screenshare"
-distfiles="https://github.com/pantarune/niri-screenshare/archive/refs/tags/v${_ver}.tar.gz"
-checksum=
-depends="niri pipewire xdg-desktop-portal"
-hostmakedepends="cargo"
+distfiles="https://github.com/pantarune/niri-screenshare/archive/v${version}.tar.gz"
+checksum=21b8e82eae5c9aadaa2bc7cdfc0cd2350b2aad0accdd4601443c572a0e056712
 
-wrksrc="niri-screenshare-${_ver}"
-
-# Upstream's Cargo.toml package version has been stuck at "0.1.0" since
-# the first release, even at newer tags - version= above tracks the
-# real git tag (v0.2.0, the latest as of this writing), not the stale
-# in-repo string. When updating, check `git ls-remote --tags` rather
-# than trusting Cargo.toml.
+# v0.2.1 is a real upstream git tag (verified it matches the tip of the
+# default branch at the time this template was written), so this is a
+# normal versioned tarball, not a _commit-pinned snapshot like the
+# other Fabric/Noctalia templates.
+#
+# "picker" (the default cargo feature) pulls in gtk4 + libadwaita for
+# the source-picker dialog; the alternative is building with
+# `configure_args="--no-default-features"` for a dialog-less dynamic-cast
+# build, which would let gtk4-devel/libadwaita-devel be dropped from
+# makedepends too. Kept the default (picker) build here since it's what
+# upstream ships by default and what most users expect.
+#
+# Binary is installed to /usr/lib, not /usr/bin: it's exclusively
+# D-Bus/portal-activated (matches upstream's own contrib/PKGBUILD), never
+# invoked directly by a user or from $PATH, aside from the optional
+# `--debug-picker` flag for manual testing.
+#
+# The systemd user unit shipped upstream (data/niri-screenshare.service)
+# is intentionally NOT installed - Void uses runit, not systemd,
+# and it is not required for correct operation: dbus-daemon activates
+# services via the plain Exec= line in the .service file below
+# regardless of init system, so first-use lazy D-Bus activation works
+# identically without a systemd unit present. data/niri-portals.conf is
+# also not installed - it's dead reference material even in upstream's
+# own PKGBUILD; the binary writes ~/.config/xdg-desktop-portal/portals.conf
+# itself on first run (see src/portal_config.rs).
 
 do_install() {
-	# build_style=cargo always passes --target ${RUST_TARGET}, so the
-	# binary lands under target/${RUST_TARGET}/release/, not the bare
-	# target/release/ path upstream's own PKGBUILD assumes (it works
-	# around this with CARGO_TARGET_DIR, which Void's build style
-	# doesn't set). Also: this is a portal backend invoked by full path
-	# from its D-Bus/systemd unit, not a $PATH binary - it belongs in
-	# /usr/lib, matching upstream's own PKGBUILD, not /usr/bin.
-	vinstall target/${RUST_TARGET}/release/niri-screenshare 755 usr/lib
-
+	vinstall "target/${RUST_TARGET}/release/niri-screenshare" 755 usr/lib
 	vinstall data/niri.portal 644 usr/share/xdg-desktop-portal/portals
 	vinstall data/org.freedesktop.impl.portal.desktop.niri.service 644 \
 		usr/share/dbus-1/services
-	vinstall data/niri-screenshare.service 644 usr/lib/systemd/user
-	# Tells xdg-desktop-portal to route ScreenCast requests to this
-	# backend specifically - present in data/ but not referenced by
-	# upstream's own PKGBUILD (looks like an oversight there, not
-	# something intentionally left out).
-	vinstall data/niri-portals.conf 644 usr/share/xdg-desktop-portal
-
 	vlicense LICENSE
+	vdoc README.md
 }
