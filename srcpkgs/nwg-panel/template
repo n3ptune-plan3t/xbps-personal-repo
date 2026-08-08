@@ -1,0 +1,73 @@
+# Template file for 'nwg-panel'
+pkgname=nwg-panel
+version=0.10.15
+revision=1
+build_style=python3-module
+hostmakedepends="python3-setuptools"
+depends="python3-gobject python3-psutil python3-i3ipc python3-dasbus
+ python3-requests gtk-layer-shell libdbusmenu-gtk3 playerctl
+ pamixer brightnessctl swaybg libnotify"
+short_desc="GTK3-based panel for sway, Hyprland, niri and dwl"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
+license="MIT"
+homepage="https://github.com/nwg-piotr/nwg-panel"
+changelog="https://github.com/nwg-piotr/nwg-panel/releases"
+distfiles="https://github.com/nwg-piotr/nwg-panel/archive/refs/tags/v${version}.tar.gz"
+checksum=4fe28d96c23ee57ea1764d78507e2d82e95eda7530f13f9882001d73bcb470af
+
+# v0.10.16 is bumped in setup.py on the current upstream default branch
+# but has no pushed tag yet; diffed it against this tag and the only
+# change is a sink-detection bugfix in tools.py (no new deps, no new
+# subprocess tools, no install-layout changes) - not worth pinning an
+# unreleased commit for. Bump to the real v0.10.16 tag once it exists.
+#
+# requests is a hard runtime dependency (nwg_panel/modules/playerctl.py,
+# unconditionally imported from main.py) despite NOT being listed in
+# upstream's own requirements.txt - caught by grepping every top-level
+# import in the tree against install_requires, not just trusting the
+# manifest.
+#
+# gtk-layer-shell is effectively hard-required (main.py wraps the
+# gi.require_version call in try/except, but only to raise a clearer
+# RuntimeError - the app still refuses to start without it).
+#
+# libdbusmenu-gtk3 (system tray / DbusmenuGtk3) and playerctl (the GI
+# typelib, not just the CLI - nwg_panel/modules/playerctl.py) ARE
+# genuinely optional at the code level: sni_system_tray is imported in
+# a try/except in main.py and playerctl.py is not, so playerctl is
+# actually hard-required same as gtk-layer-shell, while system tray
+# degrades gracefully without libdbusmenu-gtk3. Kept both as hard
+# depends anyway since tray + media controls are core advertised panel
+# features and this is what most users installing a panel expect
+# out of the box.
+#
+# pamixer chosen over pulseaudio/pipewire-pulse for volume control:
+# nwg-panel supports either pamixer or pactl as alternate backends
+# (runtime-detected via is_command(), see nwg_panel/modules/controls.py),
+# and pamixer works unmodified against both real PulseAudio and
+# PipeWire's pulse-compat layer, so depending on it doesn't presuppose
+# which audio server the user runs. pactl-only features (per-app volume
+# mixing) will silently stay unavailable unless the user's audio stack
+# already provides pactl - not force-depending on pulseaudio/pipewire-pulse
+# here since either could already be installed and forcing one is a
+# packaging decision that belongs to the audio stack, not this panel.
+#
+# brightnessctl chosen over ddcutil/light as the default brightness
+# backend for the same runtime-detection reasons (brightness_slider.py):
+# it needs no suid bit (unlike light) and no I2C/DDC setup (unlike
+# ddcutil, which is for external monitors specifically). Both remain
+# usable if the user installs them separately.
+#
+# nwg-notifications and nwg-readme-browser (separate nwg-shell
+# companion projects, is_command()-detected) are optional integrations,
+# not packaged here.
+
+post_install() {
+	vinstall nwg-panel.svg 644 usr/share/pixmaps
+	vinstall nwg-shell.svg 644 usr/share/pixmaps
+	vinstall nwg-processes.svg 644 usr/share/pixmaps
+	vinstall nwg-panel-config.desktop 644 usr/share/applications
+	vinstall nwg-processes.desktop 644 usr/share/applications
+	vlicense LICENSE
+	vdoc README.md
+}
