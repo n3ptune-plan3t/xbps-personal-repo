@@ -1,0 +1,19 @@
+# Template file for 'mint-x-icons'
+pkgname=mint-x-icons
+version=1.7.6
+revision=1
+depends="gdk-pixbuf gtk-update-icon-cache hicolor-icon-theme papirus-icon-theme"
+short_desc="Mint-X icon theme (mintified Clearlooks Revamp, Elementary and Faenza)"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/linuxmint/mint-x-icons"
+distfiles="https://github.com/linuxmint/mint-x-icons/archive/refs/tags/${version}.tar.gz"
+checksum=a072405b0d15951416af7ab671dde79dc96d09e98ab6430dd07cca2e329f1a18
+
+do_install() {
+	vcopy 'usr/share' usr
+
+	for f in "${DESTDIR}"/usr/share/icons/Mint-X*/index.theme; do
+		vsed -i "${f}" -e 's/,hicolor$/,hicolor,Papirus,Papirus-Dark,Papirus-Light/'
+	done
+}
