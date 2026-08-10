@@ -1,0 +1,19 @@
+# Template file for 'mint-y-icons'
+pkgname=mint-y-icons
+version=1.9.2
+revision=1
+depends="gdk-pixbuf gtk-update-icon-cache hicolor-icon-theme papirus-icon-theme"
+short_desc="Mint-Y icon theme (mintified Clearlooks Revamp, Elementary and Faenza)"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/linuxmint/mint-y-icons"
+distfiles="https://github.com/linuxmint/mint-y-icons/archive/refs/tags/${version}.tar.gz"
+checksum=555a00d3df20f060b0d2b9b718f48b593b123a7795ba94c13dcd10d41e5f917b
+
+do_install() {
+	vcopy 'usr/share' usr
+
+	for f in "${DESTDIR}"/usr/share/icons/Mint-Y*/index.theme; do
+		vsed -i "${f}" -e 's/,hicolor$/,hicolor,Papirus,Papirus-Dark,Papirus-Light/'
+	done
+}
