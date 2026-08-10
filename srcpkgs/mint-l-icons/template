@@ -1,0 +1,20 @@
+# Template file for 'mint-l-icons'
+_commit=f9f679c9bed2f2462040fed9872988e705bf5630
+pkgname=mint-l-icons
+version=1.8.1
+revision=1
+depends="gdk-pixbuf gtk-update-icon-cache hicolor-icon-theme papirus-icon-theme"
+short_desc="Mint-L icon theme (mintified Clearlooks Revamp, Elementary and Faenza)"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/linuxmint/mint-l-icons"
+distfiles="https://github.com/linuxmint/mint-l-icons/archive/${_commit}.tar.gz"
+checksum=431dcef7609ca173d850eef875a94bac1841fff5ce28d742bafdcc99fcb871e6
+
+do_install() {
+	vcopy 'usr/share' usr
+
+	for f in "${DESTDIR}"/usr/share/icons/Mint-L*/index.theme; do
+		vsed -i "${f}" -e 's/,hicolor$/,hicolor,Papirus,Papirus-Dark,Papirus-Light/'
+	done
+}
