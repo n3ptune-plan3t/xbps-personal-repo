@@ -1,0 +1,88 @@
+# Template file for 'awesome-git'
+_commit=ef525c2ec7c9a675209157aafdcb3d2da3692a9e
+_describe=v4.3-1745-gef525c2e
+pkgname=awesome-git
+version=4.3.1745
+revision=1
+build_style=cmake
+build_helper="qemu"
+configure_args="-DSYSCONFDIR=/etc -DOVERRIDE_VERSION=${_describe}"
+conf_files="/etc/xdg/awesome/rc.lua"
+hostmakedepends="ruby-asciidoctor ImageMagick pkg-config lua53 lua53-lgi"
+makedepends="libxcb-devel xcb-util-devel xcb-util-image-devel
+ xcb-util-keysyms-devel xcb-util-wm-devel xcb-util-cursor-devel
+ xcb-util-xrm-devel xcb-util-errors-devel startup-notification-devel
+ libxdg-basedir-devel gdk-pixbuf-devel dbus-devel libxkbcommon-devel
+ glib-devel cairo-devel libX11-devel xorgproto lua53-devel lua53-lgi"
+depends="dbus-x11 lua53-lgi>=0.7.2"
+short_desc="Highly configurable, next gen framework window manager for X (git version)"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
+license="GPL-2.0-or-later"
+homepage="http://awesomewm.org"
+distfiles="https://github.com/awesomeWM/awesome/archive/${_commit}.tar.gz"
+checksum=19360f1d213b6d026c5f4f8b3052d21eba7643b4fd720c4621af8b1c20352214
+replaces="awesome>=0"
+provides="awesome-${version}_${revision}"
+
+# Tracks awesomeWM upstream master, NOT the v4.3 tag the stable "awesome"
+# package builds from. v4.3 is from January 2019 - this commit is ~1745
+# commits and 7+ years past it, so nothing about the stable template's
+# dependency list was assumed to still be correct; every entry below was
+# re-derived directly from this commit's awesomeConfig.cmake, not copied
+# from the stable template. Concretely different from stable v4.3:
+#
+#   - glib-2.0 (>=2.79.2) is now a hard REQUIRED dependency
+#     (pkg_check_modules(AWESOME_REQUIRED REQUIRED ...) includes it) -
+#     absent from the v4.3 template entirely. Without glib-devel here
+#     the cmake configure step fails outright.
+#   - pango is GONE. Grepped every .c/.h file and both CMakeLists.txt/
+#     awesomeConfig.cmake in this commit - zero references anywhere.
+#     Including pango-devel here would just be dead weight from having
+#     assumed the stable template's list still applied.
+#   - xcb-util-errors-devel added (WITH_XCB_ERRORS autoOption - not
+#     required, but small and gives much more readable X11 error
+#     messages when enabled, so included by default like the small
+#     optional deps in the other templates in this repo).
+#   - the LuaJIT build_option from the stable template was intentionally
+#     NOT carried over: it depends on `vsed`-patching two exact lines
+#     in awesomeConfig.cmake/tests/examples/CMakeLists.txt
+#     ("COMMAND lua\b" / "LUA_COV_RUNNER lua\b") that no longer exist in
+#     this commit (the test-runner invocation was refactored to
+#     shebang'd executable .lua scripts). Blindly copying the sed would
+#     either silently no-op or break given a different current
+#     structure I did not fully re-verify - dropped rather than guess.
+#     Standard (non-JIT) lua53 path only, for now.
+#
+# xcb-randr/xcb-xtest/xcb-xinerama/xcb-shape/xcb-xfixes/xcb-xkb (all
+# pkg_check_modules'd individually in awesomeConfig.cmake) all come from
+# the single upstream libxcb source tree Void's libxcb-devel is built
+# from - confirmed via its template, not assumed.
+#
+# VERSION handling: awesomeConfig.cmake computes VERSION via `git
+# describe --dirty` when `${SOURCE_DIR}/.git` exists, else reads
+# `.version_stamp` (only present in awesomewm's own dist.sh-built
+# release tarballs, not a plain GitHub commit archive like this one),
+# else falls back to the literal string "devel". Since neither .git nor
+# .version_stamp exist in this tarball, -DOVERRIDE_VERSION is required
+# or `awesome --version` silently reports "devel". _describe was
+# computed for real via `git describe --tags` against this exact commit
+# (not guessed/hand-assembled) after unshallowing history back past the
+# v4.3 tag. xbps' own version= field can't contain dashes, hence the
+# separate ${version}=4.3.1745 (base tag + `git rev-list v4.3..HEAD
+# --count`) used for package versioning/comparison, independent of the
+# richer string baked into the actual awesome binary via OVERRIDE_VERSION.
+#
+# replaces/provides mirror void-packages' own convention for -git
+# variants shadowing a stable package (see monsterwm-git): can't have
+# both "awesome" and "awesome-git" installed at once, since they
+# install the same files.
+
+CFLAGS="-fcommon"
+
+post_patch() {
+	sed -i '/add_dependencies.*check-examples/d' CMakeLists.txt
+}
+
+post_install() {
+	vlicense LICENSE
+}
