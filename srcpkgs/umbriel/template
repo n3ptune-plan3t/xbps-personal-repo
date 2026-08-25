@@ -6,7 +6,7 @@ build_style=meson
 configure_args="--buildtype=release"
 hostmakedepends="pkg-config wayland-devel git"
 makedepends="wlroots0.20-devel wayland-devel wayland-protocols libxkbcommon-devel
- libinput-devel pixman-devel tomlplusplus-devel nlohmann_json cairo-devel pango-devel
+ libinput-devel pixman-devel tomlplusplus-devel nlohmann-json cairo-devel pango-devel
  libdrm-devel MesaLib-devel libgbm-devel libglvnd-devel libseat-devel
  eudev-libudev-devel jemalloc-devel"
 depends="xwayland-satellite"
@@ -14,23 +14,23 @@ short_desc="Wayland compositor built on wlroots and SceneFX"
 maintainer="personal <personal@localhost>"
 license="MIT"
 homepage="https://github.com/noctalia-dev/umbriel"
+distfiles="https://github.com/noctalia-dev/umbriel/archive/refs/heads/main.tar.gz"
+checksum=skip
+wrksrc="umbriel-main"
 
 # Uncomment to optimize for AMD Zen (znver1) — personal builds only
-CFLAGS="-O3 -march=znver1 -mtune=znver1"
-CXXFLAGS="-O3 -march=znver1 -mtune=znver1"
+# CFLAGS="-O3 -march=znver1 -mtune=znver1"
+# CXXFLAGS="-O3 -march=znver1 -mtune=znver1"
 
-# Fetch latest git commit with all submodules (SceneFX is required)
-do_fetch() {
-	rm -rf ${wrksrc}
-	git clone --recursive --depth 1 ${homepage}.git ${wrksrc}
-}
-
-do_extract() {
-	:
+post_extract() {
+	# GitHub branch archives do NOT include git submodules.
+	# SceneFX is required — fetch the patched fork manually.
+	rm -rf ${wrksrc}/subprojects/scenefx
+	git clone --depth 1 --branch umbriel 		https://github.com/noctalia-dev/scenefx.git 		${wrksrc}/subprojects/scenefx
 }
 
 post_install() {
 	vlicense LICENSE
-	# Strip systemd units — this is a runit system
+	# Remove systemd units — this is a runit system
 	rm -rf ${DESTDIR}/usr/lib/systemd
 }
