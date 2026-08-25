@@ -1,0 +1,81 @@
+# Template file for 'caffyne-shell'
+_commit=bf47adfd52af20bc3765fd2f42bcb07c7fd69ad4
+pkgname=caffy-ne
+version=0.0.1
+revision=1
+hostmakedepends="pkg-config"
+makedepends="gtk+3-devel wayland-devel"
+depends="python3-fabric fabric-cli python3-cffi python3-Pillow python3-psutil
+ python3-rapidfuzz python3-setproctitle python3-six python3-thefuzz
+ python3-loguru python3-pam gnome-bluetooth libdbusmenu-gtk3 gtk-layer-shell
+ gtk-session-lock matugen awww playerctl brightnessctl wf-recorder swayidle
+ wlsunset upower NetworkManager bluez"
+short_desc="Fabric-based Wayland desktop shell (bar, launcher, notifications, lock screen)"
+maintainer="n3ptune-planet <n3ptune@plan3t>"
+license="MIT"
+homepage="https://github.com/n3ptune-plan3t/caffyne-shell"
+distfiles="https://github.com/n3ptune-plan3t/caffyne-shell/archive/${_commit}.tar.gz"
+checksum=
+wrksrc="caffyne-shell-${_commit}"
+
+# libhacktk.so and libblur.so are private ctypes/cffi plugins the app
+# dlopen()s from hacktk.py/blur.py at a path relative to their own
+# __file__ (via fabric.utils.get_relative_path) - they're not shared
+# system libraries meant for other consumers, so there's nothing to gain
+# by relocating them to /usr/lib and patching that lookup; whitelist
+# them for the ELF-in-/usr/share pkglint check instead (same pattern as
+# aerc's filters/ and hplip-plugin's bundled binaries).
+ignore_elf_dirs="/usr/share/caffyne-shell/snippets"
+
+# Upstream has no tagged releases or version string anywhere in the repo;
+# version is arbitrarily pinned here and should be bumped on every
+# _commit update.
+#
+# No LICENSE file is shipped upstream despite package.nix declaring MIT,
+# so there is nothing to vlicense here. Re-check on future updates.
+#
+# cinnamon-desktop is listed as a dependency in upstream's package.nix
+# and install.sh, but neither caffyne-shell nor fabric import anything
+# from it (grepped both trees) - omitted here as dead weight. Re-check
+# on future updates in case a newer commit actually starts using it.
+#
+# gtk-session-lock provides the GtkSessionLock-0.1 typelib required by
+# lockscreen.py; python3-loguru is imported throughout the tree. Both
+# are installed by install.sh's venv path (via requirements.txt) but
+# were missing here when the shell ran on system python.
+#
+# Upstream code shells out to "awww" (services/wallpaper.py), not
+# "swww" as package.nix implies; awww is void-packaged and carries
+# replaces="swww>=0" upstream, i.e. it's the actively maintained
+# successor of the same tool.
+
+do_build() {
+	${CC} ${CFLAGS} ${LDFLAGS} -fPIC -Wall -Wextra -shared \
+		-o snippets/hacktk/lib/libhacktk.so snippets/hacktk/lib/hacktk.c \
+		$(pkg-config --cflags --libs gtk+-3.0) -lm
+
+	${CC} ${CFLAGS} ${LDFLAGS} -shared -fPIC -fvisibility=default \
+		$(pkg-config --cflags wayland-client) \
+		-o snippets/blur/lib/libblur.so \
+		snippets/blur/lib/blur.c \
+		snippets/blur/lib/ext-background-effect-v1-protocol.c \
+		-lwayland-client
+}
+
+do_install() {
+	vmkdir usr/share/caffyne-shell
+	vcopy '*' usr/share/caffyne-shell
+	rm -f "${DESTDIR}/usr/share/caffyne-shell/flake.nix" \
+	      "${DESTDIR}/usr/share/caffyne-shell/flake.lock" \
+	      "${DESTDIR}/usr/share/caffyne-shell/package.nix" \
+	      "${DESTDIR}/usr/share/caffyne-shell/install.sh"
+
+	cat > caffyne-shell.sh <<-'EOF'
+	#!/bin/sh
+	cd /usr/share/caffyne-shell || exit 1
+	exec python3 main.py "$@"
+	EOF
+	vbin caffyne-shell.sh caffyne-shell
+
+	vdoc README.md
+}
