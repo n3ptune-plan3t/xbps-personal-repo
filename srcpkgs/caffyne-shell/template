@@ -1,21 +1,21 @@
 # Template file for 'caffyne-shell'
-_commit=b59729cb9e649484f48fa90ccb85a04b7050473f
+_commit=bf47adfd52af20bc3765fd2f42bcb07c7fd69ad4
 pkgname=caffyne-shell
 version=0.0.1
-revision=2
+revision=3
 hostmakedepends="pkg-config"
 makedepends="gtk+3-devel wayland-devel"
 depends="python3-fabric fabric-cli python3-cffi python3-Pillow python3-psutil
  python3-rapidfuzz python3-setproctitle python3-six python3-thefuzz
- python3-pam gnome-bluetooth libdbusmenu-gtk3 gtk-layer-shell
- matugen awww playerctl brightnessctl wf-recorder swayidle wlsunset
- upower NetworkManager bluez"
+ python3-loguru python3-pam gnome-bluetooth libdbusmenu-gtk3 gtk-layer-shell
+ gtk-session-lock matugen awww playerctl brightnessctl wf-recorder swayidle
+ wlsunset upower NetworkManager bluez"
 short_desc="Fabric-based Wayland desktop shell (bar, launcher, notifications, lock screen)"
 maintainer="n3ptune-planet <n3ptune@plan3t>"
 license="MIT"
-homepage="https://github.com/caffyne-org/caffyne-shell"
-distfiles="https://github.com/caffyne-org/caffyne-shell/archive/${_commit}.tar.gz"
-checksum=9d08e6d8ec316d64d87aa246048d7fb03c9a727fec06ba30c3f557b0640d2f06
+homepage="https://github.com/n3ptune-plan3t/caffyne-shell"
+distfiles="https://github.com/n3ptune-plan3t/caffyne-shell/archive/${_commit}.tar.gz"
+checksum=
 wrksrc="caffyne-shell-${_commit}"
 
 # libhacktk.so and libblur.so are private ctypes/cffi plugins the app
@@ -38,6 +38,11 @@ ignore_elf_dirs="/usr/share/caffyne-shell/snippets"
 # and install.sh, but neither caffyne-shell nor fabric import anything
 # from it (grepped both trees) - omitted here as dead weight. Re-check
 # on future updates in case a newer commit actually starts using it.
+#
+# gtk-session-lock provides the GtkSessionLock-0.1 typelib required by
+# lockscreen.py; python3-loguru is imported throughout the tree. Both
+# are installed by install.sh's venv path (via requirements.txt) but
+# were missing here when the shell ran on system python.
 #
 # Upstream code shells out to "awww" (services/wallpaper.py), not
 # "swww" as package.nix implies; awww is void-packaged and carries
