@@ -3,8 +3,9 @@ pkgname=wayle
 version=0.7.0
 revision=1
 build_style=cargo
-configure_args="-- --workspace"
 build_helper="qemu"
+make_build_args="--workspace"
+make_check_args="--workspace"
 hostmakedepends="pkg-config clang cmake git"
 makedepends="gtk4-devel gtk4-layer-shell-devel gtksourceview5-devel
  pulseaudio-devel fftw-devel pipewire-devel eudev-libudev-devel"
