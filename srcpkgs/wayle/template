@@ -1,0 +1,23 @@
+# Template file for 'wayle'
+pkgname=wayle
+version=0.7.0
+revision=1
+build_style=cargo
+configure_args="--workspace"
+build_helper="qemu"
+hostmakedepends="pkg-config clang cmake git"
+makedepends="gtk4-devel gtk4-layer-shell-devel gtksourceview5-devel
+ pulseaudio-devel fftw-devel pipewire-devel eudev-libudev-devel"
+depends="upower"
+short_desc="Compositor-agnostic Wayland desktop shell with bar, OSD, and settings"
+maintainer="Local Build <root@localhost>"
+license="MIT"
+homepage="https://github.com/wayle-rs/wayle"
+distfiles="https://github.com/wayle-rs/wayle/archive/refs/tags/v${version}.tar.gz>${pkgname}-${version}.tar.gz"
+checksum=7144d843671ee80da2be8a03c5939a6d99cb1ae3d20eeac77b0b3c89a9cec0eb
+wrksrc="${pkgname}-${version}"
+
+post_install() {
+	vlicense LICENSE
+	vbin target/${RUST_TARGET}/release/wayle-settings
+}
