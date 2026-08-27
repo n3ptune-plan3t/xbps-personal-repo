@@ -1,9 +1,9 @@
 # Template file for 'Waybar'
 pkgname=Waybar
 version=0.15.0+20260827
-revision=1
+revision=2
 build_style=meson
-_commit=620bda40
+_commit=085bf1a6
 wrksrc="Waybar-${_commit}"
 configure_args="-Dlibudev=enabled -Dman-pages=enabled
  -Dsystemd=disabled -Drfkill=enabled
