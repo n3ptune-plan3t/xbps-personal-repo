@@ -3,7 +3,7 @@ pkgname=Waybar
 version=0.15.0+20260827
 revision=1
 build_style=meson
-_commit=78377fe9
+_commit=620bda40
 wrksrc="Waybar-${_commit}"
 configure_args="-Dlibudev=enabled -Dman-pages=enabled
  -Dsystemd=disabled -Drfkill=enabled
