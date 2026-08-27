@@ -1,0 +1,60 @@
+# Template file for 'driftwm-settings'
+# Personal template — based on void-packages structure as of commit
+# 60556a7c3502ed85313877ae60edbb4504534ff9 (2026-08-27); see Manual.md
+# "Mandatory variables" / "cargo" build_style, and srcpkgs/niri/template
+# as the reference pattern for post_install desktop-asset installs.
+#
+# Upstream: https://github.com/wwmaxik/driftwm-settings
+# Native GTK4 settings GUI for driftwm (reads/writes
+# ~/.config/driftwm/config.toml, hot-reloaded by driftwm on save).
+# version/checksum verified against the real v0.4.0 release tarball —
+# v0.4.0 is the actual latest release chronologically (2026-04-28);
+# the repo also has an older "v1.0.0" tag from 2026-04-13 predating it,
+# which looks like an early tagging mistake and is NOT the latest.
+pkgname=driftwm-settings
+version=0.4.0
+revision=1
+build_style=cargo
+build_helper="qemu"
+hostmakedepends="pkg-config"
+makedepends="gtk4-devel"
+depends="driftwm"
+short_desc="GTK4 settings GUI for driftwm"
+maintainer="Plawan <you@example.com>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/wwmaxik/driftwm-settings"
+changelog="https://github.com/wwmaxik/driftwm-settings/releases"
+distfiles="https://github.com/wwmaxik/driftwm-settings/archive/refs/tags/v${version}.tar.gz"
+checksum=7a5c6935248c00be2f7200900eee457ec9985df4d99094fd5c930d5983607372
+
+# --- IMPORTANT: driftwm version compatibility -------------------------
+# Upstream's own README states driftwm versions up to 0.4.0 (inclusive)
+# are "fully supported" — the driftwm template in this same set of
+# personal templates packages driftwm 0.17.3. This GUI writes
+# ~/.config/driftwm/config.toml directly from its own TOML struct
+# definitions (src/config.rs), so if driftwm's config schema has
+# changed since 0.4.0, saving from this GUI can write fields driftwm
+# 0.17.3 doesn't expect, or omit newer ones, silently breaking your
+# compositor config. Diff config.reference.toml between driftwm 0.4.0
+# and 0.17.3 before trusting this GUI's "Save" button on a config you
+# care about; the developer noted they were on vacation until
+# 2026-08-20, so a compatibility update to match newer driftwm
+# releases may not exist yet.
+
+# --- znver1 (Zen 1 / Ryzen 1000-series) CPU tuning -------------------------
+# Kept local to this template (not etc/conf) so it doesn't leak
+# -march=znver1 into every other package built with this xbps-src tree.
+pre_build() {
+	export RUSTFLAGS="${RUSTFLAGS} -C target-cpu=znver1"
+	export CFLAGS="-march=znver1 -mtune=znver1 -O2 -pipe"
+	export CXXFLAGS="${CFLAGS}"
+}
+
+# build_style=cargo's default do_install runs `cargo install --path .`,
+# which installs the driftwm-settings binary but not the .desktop file
+# or icon that upstream's own Makefile `install` target also installs.
+post_install() {
+	vinstall driftwm-settings.desktop 644 usr/share/applications
+	vinstall driftwm-settings.svg 644 usr/share/icons/hicolor/scalable/apps
+	vlicense LICENSE
+}
