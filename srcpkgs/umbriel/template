@@ -4,10 +4,10 @@
 #   - Tuned for znver1 (Zen 1) instead of the generic x86_64 baseline.
 #   - jemalloc forced on (glibc target) rather than left on "auto".
 pkgname=umbriel
-version=0.1.0.20260825
+version=0.1.0.20260827
 revision=1
-_commit=d2a02ef085afee4fdec2ba532846df55cd634d1f
-_scenefx_commit=c442e016fbf38d219a964ae4b7e1c936711c5a7c
+_commit=096cee602d4cd6d95480adc778fe0d95c7218251
+_scenefx_commit=9717fe638219017d793390cd0bd57a5d74441bdf
 build_wrksrc="umbriel-${_commit}"
 build_style=meson
 # Void's meson build-style hardcodes --buildtype=plain and forbids also
