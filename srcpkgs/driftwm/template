@@ -14,9 +14,12 @@ revision=1
 build_style=cargo
 build_helper="qemu"
 hostmakedepends="pkg-config"
+# eudev-libudev-devel: not in driftwm's own README dep list, but its
+# Smithay udev/libinput backend transitively pulls in libudev-sys,
+# which needs libudev.pc at build time (`pkg-config --libs libudev`).
 makedepends="libseat-devel libdisplay-info-devel libinput-devel libgbm-devel
- libxkbcommon-devel wayland-devel"
-depends="wayland"
+ libxkbcommon-devel wayland-devel eudev-libudev-devel"
+depends="wayland xwayland-satellite"
 short_desc="Trackpad-first infinite canvas Wayland compositor"
 maintainer="Plawan <you@example.com>"
 license="GPL-3.0-or-later"
