@@ -18,7 +18,11 @@ version=0.7.0
 revision=1
 build_style=cargo
 build_helper="qemu"
-hostmakedepends="pkg-config"
+# clang + libclang: bindgen (pulled in transitively by one of the GTK/
+# gtksourceview5 -sys crates) needs libclang.so at build time, per the
+# same pattern as srcpkgs/helvum/template and
+# srcpkgs/xwayland-satellite/template.
+hostmakedepends="pkg-config clang libclang"
 makedepends="gtk4-devel gtk4-layer-shell-devel gtksourceview5-devel
  pulseaudio-devel fftw-devel pipewire-devel eudev-libudev-devel"
 depends="hicolor-icon-theme"
