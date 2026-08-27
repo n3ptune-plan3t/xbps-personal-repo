@@ -1,0 +1,58 @@
+# Template file for 'driftwm'
+# Personal template — based on void-packages structure as of commit
+# 60556a7c3502ed85313877ae60edbb4504534ff9 (2026-08-27); see Manual.md
+# "Mandatory variables" / "cargo" build_style, and srcpkgs/niri/template
+# as the reference pattern (also a Smithay-based Rust compositor that
+# installs extra desktop-session assets via post_install).
+#
+# Upstream: https://github.com/malbiruk/driftwm
+# "A trackpad-first infinite canvas Wayland compositor" — Rust + Smithay.
+# version/checksum verified against the real v0.17.3 release tarball.
+pkgname=driftwm
+version=0.17.3
+revision=1
+build_style=cargo
+build_helper="qemu"
+hostmakedepends="pkg-config"
+makedepends="libseat-devel libdisplay-info-devel libinput-devel libgbm-devel
+ libxkbcommon-devel wayland-devel"
+depends="wayland"
+short_desc="Trackpad-first infinite canvas Wayland compositor"
+maintainer="Plawan <you@example.com>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/malbiruk/driftwm"
+changelog="https://github.com/malbiruk/driftwm/releases"
+distfiles="https://github.com/malbiruk/driftwm/archive/refs/tags/v${version}.tar.gz"
+checksum=94c6d995d58bfdd0de1f0ab47da1077bef6f65507f69dd25d3aaa108fb91cb36
+
+# --- znver1 (Zen 1 / Ryzen 1000-series) CPU tuning -------------------------
+# Kept local to this template (not etc/conf) so it doesn't leak
+# -march=znver1 into every other package built with this xbps-src tree.
+# rustc needs RUSTFLAGS -C target-cpu; CFLAGS/CXXFLAGS cover any -sys
+# crate that shells out to cc/clang (driftwm has none directly today,
+# but Smithay's git dependency tree can pull one in on a version bump).
+pre_build() {
+	export RUSTFLAGS="${RUSTFLAGS} -C target-cpu=znver1"
+	export CFLAGS="-march=znver1 -mtune=znver1 -O2 -pipe"
+	export CXXFLAGS="${CFLAGS}"
+}
+
+# Upstream ships a Makefile that wraps `cargo build --release` plus a
+# plain `install -D` install step (see its Makefile); build_style=cargo
+# already does the equivalent build+install for the driftwm binary, so
+# post_install here only adds the extra desktop/session assets the
+# Makefile's `install` target also installs.
+post_install() {
+	vbin resources/driftwm-session driftwm-session
+	vinstall resources/driftwm.desktop 644 usr/share/wayland-sessions
+	vinstall resources/driftwm-portals.conf 644 usr/share/xdg-desktop-portal
+	vinstall resources/driftwm.service 644 usr/lib/systemd/user
+	vinstall resources/driftwm-shutdown.target 644 usr/lib/systemd/user
+	vinstall config.reference.toml 644 etc/driftwm
+
+	if [ -d extras/wallpapers ]; then
+		vcopy extras/wallpapers usr/share/driftwm/wallpapers
+	fi
+
+	vlicense LICENSE
+}
