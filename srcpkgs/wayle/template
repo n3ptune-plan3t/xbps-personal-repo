@@ -1,24 +1,71 @@
 # Template file for 'wayle'
+# Personal template — based on void-packages structure as of commit
+# 60556a7c3502ed85313877ae60edbb4504534ff9 (2026-08-27); see Manual.md
+# "Mandatory variables" / "cargo" build_style section.
+#
+# Upstream: https://github.com/wayle-rs/wayle
+# "Wayland Elements" — compositor-agnostic Wayland shell (bar,
+# notifications, OSD, settings app), Rust + GTK4 + Relm4, Cargo
+# workspace producing two binaries: `wayle` (crates/wayle + wayle/)
+# and `wayle-settings` (crates/wayle-settings). Upstream's own release
+# process ships prebuilt binaries (see packaging/rpm/wayle.spec.in in
+# the tarball) — this template builds from source instead, which is
+# also why the do_build/do_install below are custom rather than
+# build_style=cargo's single-crate `cargo install --path .` default.
+# version/checksum verified against the real v0.7.0 release tarball.
 pkgname=wayle
 version=0.7.0
 revision=1
 build_style=cargo
 build_helper="qemu"
-make_build_args="--workspace"
-make_check_args="--workspace"
-hostmakedepends="pkg-config clang cmake git"
+hostmakedepends="pkg-config"
 makedepends="gtk4-devel gtk4-layer-shell-devel gtksourceview5-devel
  pulseaudio-devel fftw-devel pipewire-devel eudev-libudev-devel"
-depends="upower"
-short_desc="Compositor-agnostic Wayland desktop shell with bar, OSD, and settings"
-maintainer="Local Build <root@localhost>"
+depends="hicolor-icon-theme"
+short_desc="Wayland Elements - compositor agnostic Wayland shell"
+maintainer="Plawan <you@example.com>"
 license="MIT"
-homepage="https://github.com/wayle-rs/wayle"
-distfiles="https://github.com/wayle-rs/wayle/archive/refs/tags/v${version}.tar.gz>${pkgname}-${version}.tar.gz"
-checksum=7144d843671ee80da2be8a03c5939a6d99cb1ae3d20eeac77b0b3c89a9cec0eb
-wrksrc="${pkgname}-${version}"
+homepage="https://wayle.app/"
+changelog="https://github.com/wayle-rs/wayle/releases"
+distfiles="https://github.com/wayle-rs/wayle/archive/refs/tags/v${version}.tar.gz"
+checksum=cbb531e25ab5cd067fb3a5696695ad3361afed266a9530beabc2462e028faefd
 
-post_install() {
-	vlicense LICENSE
+# --- znver1 (Zen 1 / Ryzen 1000-series) CPU tuning -------------------------
+# Kept local to this template (not etc/conf) so it doesn't leak
+# -march=znver1 into every other package built with this xbps-src tree.
+# CFLAGS/CXXFLAGS matter here more than for driftwm: GTK4/gtksourceview5
+# bindings and several -sys crates in this workspace shell out to cc.
+pre_build() {
+	export RUSTFLAGS="${RUSTFLAGS} -C target-cpu=znver1"
+	export CFLAGS="-march=znver1 -mtune=znver1 -O2 -pipe"
+	export CXXFLAGS="${CFLAGS}"
+}
+
+# Workspace build: the default `cargo build --release --locked --target
+# ${RUST_TARGET}` from build_style=cargo already builds every workspace
+# member, so do_build is left at its default. do_install is overridden
+# because the stock cargo build_style's `cargo install --path .` only
+# knows how to install a single crate — this workspace needs both the
+# `wayle` and `wayle-settings` binaries installed explicitly, plus the
+# desktop/session assets that packaging/rpm/wayle.spec.in also installs.
+do_install() {
+	vbin target/${RUST_TARGET}/release/wayle
 	vbin target/${RUST_TARGET}/release/wayle-settings
+
+	vinstall resources/wayle.service 644 usr/lib/systemd/user
+	vinstall resources/com.wayle.settings.desktop 644 usr/share/applications
+	vinstall resources/wayle-settings.svg 644 usr/share/icons/hicolor/scalable/apps
+
+	if [ -d resources/icons/hicolor/scalable/actions ]; then
+		vcopy resources/icons/hicolor/scalable/actions \
+			usr/share/icons/hicolor/scalable/actions
+	fi
+
+	local sh
+	for sh in bash zsh fish; do
+		vtargetrun "${DESTDIR}/usr/bin/wayle" completions "${sh}" > "wayle.${sh}"
+		vcompletion "wayle.${sh}" "${sh}"
+	done
+
+	vlicense LICENSE
 }
