@@ -54,6 +54,7 @@ post_install() {
 	vinstall config.reference.toml 644 etc/driftwm
 
 	if [ -d extras/wallpapers ]; then
+		vmkdir usr/share/driftwm
 		vcopy extras/wallpapers usr/share/driftwm/wallpapers
 	fi
 
