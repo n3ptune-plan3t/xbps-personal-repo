@@ -1,0 +1,17 @@
+# Template file for 'elementary-stylesheet'
+pkgname=elementary-stylesheet
+version=8.2.2
+revision=1
+build_style=meson
+hostmakedepends="sassc glib-devel"
+short_desc="The elementary stylesheet (Stylesheet for GTK)"
+maintainer="Your Name <you@example.com>"
+license="GPL-3.0-or-later"
+homepage="https://github.com/elementary/stylesheet"
+distfiles="https://github.com/elementary/stylesheet/archive/refs/tags/${version}.tar.gz"
+checksum=
+wrksrc="stylesheet-${version}"
+
+post_install() {
+  vlicense COPYING
+}
