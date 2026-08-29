@@ -1,9 +1,88 @@
+diff --git a/src/shell/session/session_action_runner.cpp b/src/shell/session/session_action_runner.cpp
+index ed5ea23..480e6ea 100644
 --- a/src/shell/session/session_action_runner.cpp
 +++ b/src/shell/session/session_action_runner.cpp
-@@ -68,35 +68,66 @@
+@@ -10,8 +10,11 @@
+ #include "util/string_utils.h"
+ 
+ #include <chrono>
++#include <condition_variable>
+ #include <cstdlib>
+ #include <functional>
++#include <memory>
++#include <mutex>
+ #include <optional>
+ #include <string>
+ #include <string_view>
+@@ -23,6 +26,11 @@ namespace {
+ 
+   constexpr Logger kLog("session");
+   constexpr std::chrono::milliseconds kPowerCommandTimeout{5000};
++  // Grace window for Detached launches (see probeLaunch() below). Long enough for a fast
++  // permission failure (`init 6` as non-root, `zzz` without a udev ACL, `sudo -n` without
++  // NOPASSWD) to report its exit code - these typically fail in well under 100ms - but short
++  // enough that picking the working command doesn't feel laggy from the panel.
++  constexpr std::chrono::milliseconds kPowerCommandGracePeriod{1500};
+ 
+   enum class PowerLaunchMode {
+     Blocking,
+@@ -68,35 +76,119 @@ namespace {
      }
    }
  
++  // process::runAsync(vector<string>)'s bool return only tells you whether execve() itself
++  // succeeded in the double-forked child - not whether the command actually did anything. A
++  // permission-denied `init 6`/`init 0`/`zzz` execs fine and then fails at runtime, which used
++  // to be reported as success, so the fallback loop below stopped on the very first candidate
++  // that merely *existed*, and pkexec/sudo fallbacks that might have actually worked were never
++  // tried. probeLaunch() fixes this without ever killing a legitimately-running command: it
++  // launches via the callback-based process::runAsync (which does NOT apply an internal
++  // timeout/kill unless one is requested) and waits up to `gracePeriod` for it to exit. A
++  // permission failure reports its exit code well within that window. A real suspend (blocks on
++  // the /sys/power/state write until resume), a real reboot/shutdown (tearing down services), or
++  // a pkexec/run0 prompt waiting on a password all outlive the window - in that case we do NOT
++  // kill anything, we just stop watching and treat it as success; process::runAsync's own worker
++  // thread keeps running until the process eventually exits and reaps it.
++  struct ProbeState {
++    std::mutex mutex;
++    std::condition_variable cv;
++    bool done = false;
++    process::RunResult result;
++  };
++
++  struct ProbeOutcome {
++    bool started = false;      // false only if process::runAsync couldn't even spawn a worker
++    bool stillRunning = false; // outlived gracePeriod without exiting - assume it's proceeding
++    process::RunResult result; // valid only when started && !stillRunning
++  };
++
++  template <typename Command>
++  [[nodiscard]] ProbeOutcome probeLaunch(const Command& command, std::chrono::milliseconds gracePeriod) {
++    auto state = std::make_shared<ProbeState>();
++
++    const bool started = process::runAsync(
++        command, process::RunCallbacks{
++                     .onExit =
++                         [state](process::RunResult result) {
++                           std::scoped_lock lock(state->mutex);
++                           state->result = std::move(result);
++                           state->done = true;
++                           state->cv.notify_all();
++                         }
++                 }
++    );
++    if (!started) {
++      return ProbeOutcome{.started = false};
++    }
++
++    std::unique_lock lock(state->mutex);
++    const bool exitedInTime = state->cv.wait_for(lock, gracePeriod, [&state] { return state->done; });
++    if (!exitedInTime) {
++      return ProbeOutcome{.started = true, .stillRunning = true};
++    }
++    return ProbeOutcome{.started = true, .stillRunning = false, .result = state->result};
++  }
++
 +  // NOTE: zzz does not need pkexec/sudo/setuid on a standard Void install -
 +  // it works for the active seat user because it only requires write access
 +  // to /sys/power/state, which elogind's udev ACLs grant to the logged-in
@@ -75,3 +154,52 @@
      };
      return variants;
    }
+@@ -129,12 +221,22 @@ namespace {
+       attempted = true;
+       const std::string label = commandLabel(command);
+       if (mode == PowerLaunchMode::Detached) {
+-        if (process::runAsync(command)) {
+-          kLog.info("{}: {} launched", action, label);
++        const ProbeOutcome outcome = probeLaunch(command, kPowerCommandGracePeriod);
++        if (!outcome.started) {
++          kLog.warn("{}: {} failed to launch", action, label);
++          continue;
++        }
++        if (outcome.stillRunning) {
++          kLog.info("{}: {} still running after {}ms, assuming success", action, label, kPowerCommandGracePeriod.count());
+           cacheIdx = idx;
+           return true;
+         }
+-        kLog.warn("{}: {} failed to launch", action, label);
++        if (outcome.result) {
++          kLog.info("{}: {} accepted", action, label);
++          cacheIdx = idx;
++          return true;
++        }
++        logSessionCommandFailure(action, label, outcome.result);
+         continue;
+       }
+ 
+@@ -158,11 +260,20 @@ namespace {
+ 
+   [[nodiscard]] bool runPowerOverride(std::string_view action, const std::string& command, PowerLaunchMode mode) {
+     if (mode == PowerLaunchMode::Detached) {
+-      if (process::runAsync(command)) {
+-        kLog.info("{}: custom override launched", action);
++      const ProbeOutcome outcome = probeLaunch(command, kPowerCommandGracePeriod);
++      if (!outcome.started) {
++        kLog.warn("{}: custom override failed to launch", action);
++        return false;
++      }
++      if (outcome.stillRunning) {
++        kLog.info("{}: custom override still running after {}ms, assuming success", action, kPowerCommandGracePeriod.count());
++        return true;
++      }
++      if (outcome.result) {
++        kLog.info("{}: custom override accepted", action);
+         return true;
+       }
+-      kLog.warn("{}: custom override failed to launch", action);
++      logSessionCommandFailure(action, command, outcome.result);
+       return false;
+     }
