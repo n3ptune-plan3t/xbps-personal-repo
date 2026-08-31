@@ -6,10 +6,10 @@ revision=1
 # Pin these to the exact submodule commits recorded in JDSP4Linux's
 # .gitmodules at the v${version} tag (git submodule status <path> after
 # `git clone --recursive` at that tag will give you the 40-char SHAs).
-_graphiceqwidget_commit="REPLACE_WITH_COMMIT"
-_flattabwidget_commit="REPLACE_WITH_COMMIT"
-_liquidequalizerwidget_commit="REPLACE_WITH_COMMIT"
-_eeleditor_commit="REPLACE_WITH_COMMIT"
+_graphiceqwidget_commit="ba63ad32682b20e2d4fde4c8a4aafe4da3423cc5"
+_flattabwidget_commit="06509713d85dc336c4a3b089ef9d265003aaf48e"
+_liquidequalizerwidget_commit="06509713d85dc336c4a3b089ef9d265003aaf48e"
+_eeleditor_commit="b2f392480e00ca232c397610f42688b165b87640"
 
 build_style=qmake
 QT=qt6
