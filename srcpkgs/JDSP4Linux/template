@@ -41,18 +41,27 @@ post_extract() {
 	# The tarball ships the submodule directories as empty placeholders
 	# (GitHub source archives never include submodule content), so swap
 	# each one out for the matching distfile we fetched separately.
-	rmdir src/subprojects/GraphicEQWidget
+
+	if [ -d src/subprojects/GraphicEQWidget ]; then
+		rmdir src/subprojects/GraphicEQWidget
+	fi
 	mv "GraphicEQWidget-${_graphiceqwidget_commit}" src/subprojects/GraphicEQWidget
 
-	rmdir src/subprojects/FlatTabWidget
+	if [ -d src/subprojects/FlatTabWidget ]; then
+		rmdir src/subprojects/FlatTabWidget
+	fi
 	mv "FlatTabWidget-${_flattabwidget_commit}" src/subprojects/FlatTabWidget
 
-	rmdir src/subprojects/LiquidEqualizerWidget
+	if [ -d src/subprojects/LiquidEqualizerWidget ]; then
+		rmdir src/subprojects/LiquidEqualizerWidget
+	fi
 	mv "LiquidEqualizerWidget-${_liquidequalizerwidget_commit}" src/subprojects/LiquidEqualizerWidget
 
 	# NB: the .gitmodules path is EELEditor but the upstream repo for it
 	# is named LiveprogIDE - only the directory is renamed, not the repo.
-	rmdir src/subprojects/EELEditor
+	if [ -d src/subprojects/EELEditor ]; then
+		rmdir src/subprojects/EELEditor
+	fi
 	mv "LiveprogIDE-${_eeleditor_commit}" src/subprojects/EELEditor
 }
 
