@@ -1,0 +1,68 @@
+ Template file for 'JDSP4Linux'
+pkgname=JDSP4Linux
+version=2.7.0
+revision=1
+
+# Pin these to the exact submodule commits recorded in JDSP4Linux's
+# .gitmodules at the v${version} tag (git submodule status <path> after
+# `git clone --recursive` at that tag will give you the 40-char SHAs).
+_graphiceqwidget_commit="REPLACE_WITH_COMMIT"
+_flattabwidget_commit="REPLACE_WITH_COMMIT"
+_liquidequalizerwidget_commit="REPLACE_WITH_COMMIT"
+_eeleditor_commit="REPLACE_WITH_COMMIT"
+
+build_style=qmake
+QT=qt6
+configure_args="CONFIG+=release"
+hostmakedepends="pkg-config qt6-base"
+makedepends="qt6-base-devel qt6-base-private-devel qt6-svg-devel
+ libarchive-devel glib-devel glibmm-devel pipewire-devel libxkbcommon-devel"
+depends="pipewire"
+short_desc="Audio effect processor for PipeWire and PulseAudio clients (JamesDSP port)"
+maintainer="Plawan <you@example.com>"
+license="GPL-3.0-only"
+homepage="https://github.com/Audio4Linux/JDSP4Linux"
+distfiles="https://github.com/Audio4Linux/JDSP4Linux/archive/refs/tags/${version}.tar.gz
+ https://github.com/ThePBone/GraphicEQWidget/archive/${_graphiceqwidget_commit}.tar.gz
+ https://github.com/ThePBone/FlatTabWidget/archive/${_flattabwidget_commit}.tar.gz
+ https://github.com/ThePBone/LiquidEqualizerWidget/archive/${_liquidequalizerwidget_commit}.tar.gz
+ https://github.com/ThePBone/LiveprogIDE/archive/${_eeleditor_commit}.tar.gz"
+# checksum intentionally left blank per request - run
+#   ./xbps-src fetch JDSP4Linux
+# and copy the sha256 hashes it prints into the five slots below,
+# in the same order as the distfiles above.
+checksum="
+ 
+ 
+ 
+ "
+
+post_extract() {
+	# The tarball ships the submodule directories as empty placeholders
+	# (GitHub source archives never include submodule content), so swap
+	# each one out for the matching distfile we fetched separately.
+	rmdir src/subprojects/GraphicEQWidget
+	mv "GraphicEQWidget-${_graphiceqwidget_commit}" src/subprojects/GraphicEQWidget
+
+	rmdir src/subprojects/FlatTabWidget
+	mv "FlatTabWidget-${_flattabwidget_commit}" src/subprojects/FlatTabWidget
+
+	rmdir src/subprojects/LiquidEqualizerWidget
+	mv "LiquidEqualizerWidget-${_liquidequalizerwidget_commit}" src/subprojects/LiquidEqualizerWidget
+
+	# NB: the .gitmodules path is EELEditor but the upstream repo for it
+	# is named LiveprogIDE - only the directory is renamed, not the repo.
+	rmdir src/subprojects/EELEditor
+	mv "LiveprogIDE-${_eeleditor_commit}" src/subprojects/EELEditor
+}
+
+do_install() {
+	# JDSP4Linux.pro has no working `make install` target (upstream's own
+	# Fedora/RPM packaging stages files by hand too, see JDSP4Linux.spec),
+	# so do it ourselves instead of relying on the qmake build-style default.
+	vbin src/jamesdsp jamesdsp
+	vinstall meta/jamesdsp.desktop 644 usr/share/applications
+	vinstall resources/icons/icon.png 644 usr/share/pixmaps jamesdsp.png
+	vinstall resources/icons/icon.svg 644 usr/share/icons/hicolor/scalable/apps jamesdsp.svg
+	vlicense LICENSE
+}
