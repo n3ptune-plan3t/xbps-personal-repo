@@ -1,0 +1,33 @@
+# Template file for 'sonobus-bin'
+pkgname=sonobus-bin
+version=1.7.2
+revision=1
+archs="x86_64"
+hostmakedepends="bsdtar"
+short_desc="Easy to use application for streaming high-quality, low-latency P2P audio"
+maintainer="Álvaro De Quinta <blackcherry@danwin1210.de>"
+license="GPL-3.0-or-later"
+homepage="https://sonobus.net"
+distfiles="https://raw.githubusercontent.com/sonosaurus/sonobus-packages/refs/heads/gh-pages/freight/apt/stable/main/sonobus_${version}-0_ubuntu_amd64.deb"
+checksum=a525deec2d7eac4fd8c6d602da81f24ba6ae4dde27ad5b19c2a89990f03c99d9
+repository=nonfree
+nostrip=yes
+skip_extraction="sonobus_${version}-0_ubuntu_amd64.deb"
+conflicts="sonobus"
+provides="sonobus-${version}_${revision}"
+
+# The upstream file is a .deb (an ar archive), which isn't one of the
+# extensions xbps-src auto-extracts. Pull data.tar.gz out of it by hand
+# and extract that into $wrksrc instead.
+do_extract() {
+	local debfile="${XBPS_SRCDISTDIR}/${pkgname}-${version}/sonobus_${version}-0_ubuntu_amd64.deb"
+	bsdtar -xf "${debfile}" -O data.tar.gz > data.tar.gz
+	bsdtar -xf data.tar.gz
+	rm -f data.tar.gz
+}
+
+do_install() {
+	vcopy "usr/bin" usr
+	vcopy "usr/lib" usr
+	vcopy "usr/share" usr
+}
