@@ -16,7 +16,12 @@ build_style=qmake
 # which of those siblings is the real source tree.
 build_wrksrc="JDSP4Linux-${version}"
 QT=qt6
-configure_args="CONFIG+=release"
+# libjamesdsp's jdsp_header.h uses "struct dspsys *" in a function-pointer
+# field before struct dspsys is declared at file scope, so that use gets
+# its own parameter-list-scoped (and therefore incompatible) copy of the
+# tag - harmless in practice, but GCC 14 turned this from a warning into
+# a hard error by default. Silence it instead of patching vendored code.
+configure_args="CONFIG+=release QMAKE_CFLAGS+=-Wno-incompatible-pointer-types"
 hostmakedepends="pkg-config qt6-base"
 makedepends="qt6-base-devel qt6-base-private-devel qt6-svg-devel
  libarchive-devel glib-devel glibmm-devel pipewire-devel libxkbcommon-devel"
