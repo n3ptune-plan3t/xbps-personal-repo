@@ -1,17 +1,20 @@
- Template file for 'JDSP4Linux'
+# Template file for 'JDSP4Linux'
 pkgname=JDSP4Linux
 version=2.7.0
 revision=1
-
 # Pin these to the exact submodule commits recorded in JDSP4Linux's
-# .gitmodules at the v${version} tag (git submodule status <path> after
-# `git clone --recursive` at that tag will give you the 40-char SHAs).
+# .gitmodules at the v${version} tag (git ls-tree -r ${version} -- src/subprojects
+# will give you the 40-char SHAs directly, no need to clone recursively).
 _graphiceqwidget_commit="ba63ad32682b20e2d4fde4c8a4aafe4da3423cc5"
 _flattabwidget_commit="06509713d85dc336c4a3b089ef9d265003aaf48e"
-_liquidequalizerwidget_commit="06509713d85dc336c4a3b089ef9d265003aaf48e"
+_liquidequalizerwidget_commit="82a0c5240093e58b97ccbeb3716ee64e71a68d7c"
 _eeleditor_commit="b2f392480e00ca232c397610f42688b165b87640"
-
 build_style=qmake
+# With more than one distfile, xbps-src extracts everything flat into
+# $wrksrc as sibling directories (the primary source dir does NOT become
+# $wrksrc itself). build_wrksrc tells the configure/build/install phases
+# which of those siblings is the real source tree.
+build_wrksrc="JDSP4Linux-${version}"
 QT=qt6
 configure_args="CONFIG+=release"
 hostmakedepends="pkg-config qt6-base"
@@ -38,31 +41,34 @@ checksum="
  "
 
 post_extract() {
-	# The tarball ships the submodule directories as empty placeholders
-	# (GitHub source archives never include submodule content), so swap
-	# each one out for the matching distfile we fetched separately.
+	# post_extract always runs with CWD = $wrksrc, which (because we have
+	# multiple distfiles) is the FLAT directory containing every extracted
+	# distfile as a sibling - it is NOT the same as $build_wrksrc. So the
+	# submodule tarballs (already siblings in CWD) need to be moved INTO
+	# the primary source dir, not into a bare "src/subprojects/..." path.
+	local basedir="JDSP4Linux-${version}"
 
-	if [ -d src/subprojects/GraphicEQWidget ]; then
-		rmdir src/subprojects/GraphicEQWidget
+	if [ -d "${basedir}/src/subprojects/GraphicEQWidget" ]; then
+		rmdir "${basedir}/src/subprojects/GraphicEQWidget"
 	fi
-	mv "GraphicEQWidget-${_graphiceqwidget_commit}" src/subprojects/GraphicEQWidget
+	mv "GraphicEQWidget-${_graphiceqwidget_commit}" "${basedir}/src/subprojects/GraphicEQWidget"
 
-	if [ -d src/subprojects/FlatTabWidget ]; then
-		rmdir src/subprojects/FlatTabWidget
+	if [ -d "${basedir}/src/subprojects/FlatTabWidget" ]; then
+		rmdir "${basedir}/src/subprojects/FlatTabWidget"
 	fi
-	mv "FlatTabWidget-${_flattabwidget_commit}" src/subprojects/FlatTabWidget
+	mv "FlatTabWidget-${_flattabwidget_commit}" "${basedir}/src/subprojects/FlatTabWidget"
 
-	if [ -d src/subprojects/LiquidEqualizerWidget ]; then
-		rmdir src/subprojects/LiquidEqualizerWidget
+	if [ -d "${basedir}/src/subprojects/LiquidEqualizerWidget" ]; then
+		rmdir "${basedir}/src/subprojects/LiquidEqualizerWidget"
 	fi
-	mv "LiquidEqualizerWidget-${_liquidequalizerwidget_commit}" src/subprojects/LiquidEqualizerWidget
+	mv "LiquidEqualizerWidget-${_liquidequalizerwidget_commit}" "${basedir}/src/subprojects/LiquidEqualizerWidget"
 
 	# NB: the .gitmodules path is EELEditor but the upstream repo for it
 	# is named LiveprogIDE - only the directory is renamed, not the repo.
-	if [ -d src/subprojects/EELEditor ]; then
-		rmdir src/subprojects/EELEditor
+	if [ -d "${basedir}/src/subprojects/EELEditor" ]; then
+		rmdir "${basedir}/src/subprojects/EELEditor"
 	fi
-	mv "LiveprogIDE-${_eeleditor_commit}" src/subprojects/EELEditor
+	mv "LiveprogIDE-${_eeleditor_commit}" "${basedir}/src/subprojects/EELEditor"
 }
 
 do_install() {
@@ -70,7 +76,9 @@ do_install() {
 	# Fedora/RPM packaging stages files by hand too, see JDSP4Linux.spec),
 	# so do it ourselves instead of relying on the qmake build-style default.
 	vbin src/jamesdsp jamesdsp
-	vinstall meta/jamesdsp.desktop 644 usr/share/applications
+	# There is no meta/jamesdsp.desktop in the tree - the real desktop
+	# file lives under meta/flatpak/ with the upstream app-id name.
+	vinstall meta/flatpak/me.timschneeberger.jdsp4linux.desktop 644 usr/share/applications jamesdsp.desktop
 	vinstall resources/icons/icon.png 644 usr/share/pixmaps jamesdsp.png
 	vinstall resources/icons/icon.svg 644 usr/share/icons/hicolor/scalable/apps jamesdsp.svg
 	vlicense LICENSE
