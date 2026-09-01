@@ -1,7 +1,7 @@
 # Template file for 'sonobus-bin'
 pkgname=sonobus-bin
 version=1.7.2
-revision=1
+revision=2
 archs="x86_64"
 hostmakedepends="bsdtar"
 short_desc="Easy to use application for streaming high-quality, low-latency P2P audio"
@@ -10,7 +10,6 @@ license="GPL-3.0-or-later"
 homepage="https://sonobus.net"
 distfiles="https://raw.githubusercontent.com/sonosaurus/sonobus-packages/refs/heads/gh-pages/freight/apt/stable/main/sonobus_${version}-0_ubuntu_amd64.deb"
 checksum=a525deec2d7eac4fd8c6d602da81f24ba6ae4dde27ad5b19c2a89990f03c99d9
-repository=nonfree
 nostrip=yes
 skip_extraction="sonobus_${version}-0_ubuntu_amd64.deb"
 conflicts="sonobus"
