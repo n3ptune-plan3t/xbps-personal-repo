@@ -45,6 +45,14 @@ distfiles="https://github.com/Audio4Linux/JDSP4Linux/archive/refs/tags/${version
 #   ./xbps-src fetch JDSP4Linux
 # and copy the sha256 hashes it prints into the five slots below,
 # in the same order as the distfiles above.
+# NOTE: this template ships with patches/pipewire-typed-proxy-cast.patch -
+# newer PipeWire headers made pw_node/pw_link/pw_module/pw_client/pw_device
+# distinct opaque types instead of interchangeable with pw_proxy, so the
+# upstream code's pw_*_add_listener(proxy, ...) calls no longer typecheck.
+# The patch just adds the explicit casts (same object, just a stricter
+# compile-time API now) - keep it next to the template, in
+# srcpkgs/JDSP4Linux/patches/, so xbps-src's do-patch phase picks it up
+# automatically.
 checksum="
  
  
