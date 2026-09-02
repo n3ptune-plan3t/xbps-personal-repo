@@ -101,7 +101,7 @@ done
      mkdir -p masterdir-x86_64/etc/xbps.d
      echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" \
        > masterdir-x86_64/etc/xbps.d/17-noid.conf
-    su builder -c 'xbps-install -r masterdir-x86_64 -Sy --yes'
+     su builder -c 'yes | xbps-install -r masterdir-x86_64 -Sy'
      ;;
  esac
 
