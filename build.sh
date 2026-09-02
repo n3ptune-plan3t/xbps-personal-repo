@@ -77,22 +77,36 @@ for template in srcpkgs/*/template; do
       done
 done
 
-cd /home/builder/void-packages
+ cd /home/builder/void-packages
+ 
+ if [ -d masterdir-x86_64 ]; then
+   echo "==> Reusing cached masterdir, updating bootstrap packages"
+   if ! su builder -c './xbps-src bootstrap-update'; then
+     echo "==> bootstrap-update failed, falling back to a full rebootstrap"
+     rm -rf masterdir-x86_64
+     su builder -c './xbps-src binary-bootstrap'
+   fi
+ else
+   echo "==> No cached masterdir, bootstrapping fresh"
+   su builder -c './xbps-src binary-bootstrap'
+ fi
+ 
+# Some of our packages need newer tooling than stock Void ships (e.g. oxwm
+# needs a newer zig than Void's default repo has). Only enable this for
+# those specific packages, so unrelated builds keep resolving deps from
+# stock Void.
+ case " $PKG " in
+   *" oxwm "*)
+     echo "==> Enabling Noid Linux repo in masterdir for $PKG"
+     mkdir -p masterdir-x86_64/etc/xbps.d
+     echo "repository=https://github.com/noid-linux/xbps-repo/releases/latest/download" \
+       > masterdir-x86_64/etc/xbps.d/17-noid.conf
+    su builder -c 'xbps-install -r masterdir-x86_64 -Sy --yes'
+     ;;
+ esac
 
-if [ -d masterdir-x86_64 ]; then
-  echo "==> Reusing cached masterdir, updating bootstrap packages"
-  if ! su builder -c './xbps-src bootstrap-update'; then
-    echo "==> bootstrap-update failed, falling back to a full rebootstrap"
-    rm -rf masterdir-x86_64
-    su builder -c './xbps-src binary-bootstrap'
-  fi
-else
-  echo "==> No cached masterdir, bootstrapping fresh"
-  su builder -c './xbps-src binary-bootstrap'
-fi
-
-su builder -c "xgensum -i srcpkgs/$PKG/template"
-su builder -c "./xbps-src pkg $PKG"
+ su builder -c "xgensum -i srcpkgs/$PKG/template"
+ su builder -c "./xbps-src pkg $PKG"
 
 # Manually de-duplicate hostdir/binpkgs, keeping only the newest version
 # of each package. xbps-rindex -c was supposed to handle this but isn't
