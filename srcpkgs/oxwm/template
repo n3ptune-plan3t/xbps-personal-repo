@@ -1,0 +1,40 @@
+# Template file for 'oxwm'
+pkgname=oxwm
+version=0.12.0
+revision=1
+# Pinned to latest master as of 2026-09-02 — there are no tagged releases yet.
+_commit=d0bb35b8cde97782c925c102521ebaeec389db95
+build_style=zig-build
+build_helper="zig"
+hostmakedepends="zig pkg-config"
+makedepends="libX11-devel libXft-devel freetype-devel fontconfig-devel libXinerama-devel"
+short_desc="Dynamic window manager written in Zig, inspired by dwm"
+maintainer="Your Name <you@example.com>"
+license="GPL-3.0-only"
+homepage="https://github.com/tonybanters/oxwm"
+distfiles="https://github.com/tonybanters/oxwm/archive/${_commit}.tar.gz>oxwm-${_commit}.tar.gz
+ https://www.lua.org/ftp/lua-5.4.8.tar.gz"
+checksum="
+
+"
+skip_extraction="lua-5.4.8.tar.gz"
+wrksrc="oxwm-${_commit}"
+
+# Zig's package manager needs network access to resolve build.zig.zon
+# dependencies, which xbps-src's masterdir chroot does not allow. Pre-seed
+# the global Zig package cache with the vendored Lua tarball, keyed by the
+# content hash pinned in build.zig.zon, so `zig build` resolves it from
+# disk instead of trying (and failing) to fetch it.
+export ZIG_GLOBAL_CACHE_DIR="${XBPS_BUILDDIR}/zig-cache"
+
+pre_build() {
+	local _luahash="N-V-__8AAKEzFAAA695b9LXBhUSVK5MAV_VKSm1mEj3Acbze"
+	mkdir -p "${ZIG_GLOBAL_CACHE_DIR}/p/${_luahash}"
+	bsdtar -xf "${XBPS_SRCDISTDIR}/${pkgname}-${version}/lua-5.4.8.tar.gz" \
+		-C "${ZIG_GLOBAL_CACHE_DIR}/p/${_luahash}" --strip-components=1
+}
+
+post_install() {
+	vlicense LICENSE
+	vdoc readme.org
+}
