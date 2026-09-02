@@ -15,7 +15,8 @@ homepage="https://github.com/tonybanters/oxwm"
 distfiles="https://github.com/tonybanters/oxwm/archive/${_commit}.tar.gz>oxwm-${_commit}.tar.gz
  https://www.lua.org/ftp/lua-5.4.8.tar.gz"
 checksum="
-
+c61559f4988cc84615306c9c8fbc7b7304c18f7667fce9eb991a112e08b48b00
+4f18ddae154e793e46eeab727c59ef1c0c0c2b744e7b94219710d76f530629ae
 "
 skip_extraction="lua-5.4.8.tar.gz"
 wrksrc="oxwm-${_commit}"
