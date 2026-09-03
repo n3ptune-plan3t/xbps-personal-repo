@@ -1,8 +1,8 @@
 # Template file for 'noctalia'
-_commit=2314bbb7b30ed7c6d2495ae5801817690777c4f1
+_commit=f95e95cafde8c23f1d3a62b969e2b5717c96d741
 pkgname=noctalia-v5
-version=5.0.0
-revision=13
+version=5.0.1
+revision=1
 build_style=meson
 configure_args="-Dtests=disabled -Djemalloc=enabled -Dnative_optimizations=false"
 hostmakedepends="pkg-config wayland-devel"
